@@ -1,0 +1,6 @@
+@Fraga.Api_HostAddress = http://localhost:5007
+
+GET {{Fraga.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
