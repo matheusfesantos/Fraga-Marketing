@@ -14,3 +14,5 @@ C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\ob
 C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\obj\Debug\net10.0\refint\Fraga.Application.dll
 C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\obj\Debug\net10.0\Fraga.Application.pdb
 C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\obj\Debug\net10.0\ref\Fraga.Application.dll
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\bin\Debug\net10.0\Fraga.Infrastructure.dll
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\bin\Debug\net10.0\Fraga.Infrastructure.pdb

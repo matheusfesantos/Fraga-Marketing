@@ -597,7 +597,8 @@
       },
       "Fraga.Application/1.0.0": {
         "dependencies": {
-          "Fraga.Domain": "1.0.0"
+          "Fraga.Domain": "1.0.0",
+          "Fraga.Infrastructure": "1.0.0"
         },
         "runtime": {
           "Fraga.Application.dll": {

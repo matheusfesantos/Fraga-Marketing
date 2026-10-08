@@ -546,6 +546,9 @@
             "projectReferences": {
               "C:\\Users\\rosiv\\OneDrive\\Desktop\\Fraga-Marketing\\backend\\src\\Fraga.Domain\\Fraga.Domain.csproj": {
                 "projectPath": "C:\\Users\\rosiv\\OneDrive\\Desktop\\Fraga-Marketing\\backend\\src\\Fraga.Domain\\Fraga.Domain.csproj"
+              },
+              "C:\\Users\\rosiv\\OneDrive\\Desktop\\Fraga-Marketing\\backend\\src\\Fraga.Infrastructure\\Fraga.Infrastructure.csproj": {
+                "projectPath": "C:\\Users\\rosiv\\OneDrive\\Desktop\\Fraga-Marketing\\backend\\src\\Fraga.Infrastructure\\Fraga.Infrastructure.csproj"
               }
             }
           }

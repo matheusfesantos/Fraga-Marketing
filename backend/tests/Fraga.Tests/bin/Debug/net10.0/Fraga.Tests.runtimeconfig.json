@@ -7,6 +7,7 @@
     },
     "configProperties": {
       "MSTest.EnableParentProcessQuery": true,
+      "System.Reflection.NullabilityInfoContext.IsSupported": true,
       "System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization": false
     }
   }

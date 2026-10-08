@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Fraga.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+458e9dc28bf4ad0409354d961d34adcc33c38ec9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+89d7b6e2463bc3fd5e66952549855547b203bca4")]
 [assembly: System.Reflection.AssemblyProductAttribute("Fraga.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Fraga.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
