@@ -1,0 +1,16 @@
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\bin\Debug\net10.0\Fraga.Application.deps.json
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\bin\Debug\net10.0\Fraga.Application.dll
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\bin\Debug\net10.0\Fraga.Application.pdb
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\bin\Debug\net10.0\Fraga.Domain.dll
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\bin\Debug\net10.0\Fraga.Domain.pdb
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\obj\Debug\net10.0\Fraga.Application.csproj.AssemblyReference.cache
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\obj\Debug\net10.0\Fraga.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\obj\Debug\net10.0\Fraga.Application.AssemblyInfoInputs.cache
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\obj\Debug\net10.0\Fraga.Application.AssemblyInfo.cs
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\obj\Debug\net10.0\Fraga.Application.csproj.CoreCompileInputs.cache
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\obj\Debug\net10.0\Fraga.Application.sourcelink.json
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\obj\Debug\net10.0\Fraga.Ap.2C083101.Up2Date
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\obj\Debug\net10.0\Fraga.Application.dll
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\obj\Debug\net10.0\refint\Fraga.Application.dll
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\obj\Debug\net10.0\Fraga.Application.pdb
+C:\Users\rosiv\OneDrive\Desktop\Fraga-Marketing\backend\src\Fraga.Application\obj\Debug\net10.0\ref\Fraga.Application.dll
