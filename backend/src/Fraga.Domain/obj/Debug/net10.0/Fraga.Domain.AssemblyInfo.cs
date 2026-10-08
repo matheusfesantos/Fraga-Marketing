@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Fraga.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7184f7c2ea825c20a86102e26bc198baea6d978a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+458e9dc28bf4ad0409354d961d34adcc33c38ec9")]
 [assembly: System.Reflection.AssemblyProductAttribute("Fraga.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Fraga.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

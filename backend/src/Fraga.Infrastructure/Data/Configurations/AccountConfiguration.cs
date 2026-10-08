@@ -2,7 +2,7 @@ using Fraga.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Fraga.Infrastructure.Data.Configurations.AccountConfiguration;
+namespace Fraga.Infrastructure.Data.Configurations;
 
 public class AccountConfiguration : IEntityTypeConfiguration<Account>
 {

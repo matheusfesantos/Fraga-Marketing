@@ -12,6 +12,8 @@ public class Account
     public Guid Id { get; private set; }
 
     public decimal Balance { get; private set; }
+    
+    public User? User { get; private set; }
 
     public ICollection<Transaction> Transactions { get; private set; } =
         new List<Transaction>();
