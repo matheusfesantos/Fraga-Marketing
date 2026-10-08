@@ -1,18 +1,53 @@
-# .NET
+# ==============================
+# .NET / C#
+# ==============================
+
 **/bin/
 **/obj/
 
-# Visual Studio / Rider
+# Visual Studio
 .vs/
-.idea/
-
-# User-specific files
 *.user
 *.suo
+
+# Rider / JetBrains
+.idea/
+
+# Test results
+TestResults/
+*.trx
+
+# Coverage
+coverage/
+.coverage
+*.coverage
+*.coveragexml
 
 # Logs
 *.log
 
+# NuGet
+*.nupkg
+*.snupkg
+
+# ASP.NET / local settings
+appsettings.Development.json
+appsettings.Local.json
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+.cache/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
 # OS
 .DS_Store
 Thumbs.db
+
+# IDE
+.vscode/
