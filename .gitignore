@@ -1,0 +1,18 @@
+# .NET
+**/bin/
+**/obj/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+
+# User-specific files
+*.user
+*.suo
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
