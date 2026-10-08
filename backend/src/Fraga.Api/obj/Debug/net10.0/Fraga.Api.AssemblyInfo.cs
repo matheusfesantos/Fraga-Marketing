@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Fraga.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+89d7b6e2463bc3fd5e66952549855547b203bca4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0ee2b97062c11cdf8c285150fceeb452a768d272")]
 [assembly: System.Reflection.AssemblyProductAttribute("Fraga.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Fraga.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
