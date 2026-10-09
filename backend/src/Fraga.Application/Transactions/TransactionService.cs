@@ -1,7 +1,6 @@
+using Fraga.Application.Abstractions;
 using Fraga.Application.Transactions.DTOs;
 using Fraga.Domain.Entities;
-using Fraga.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
 
 namespace Fraga.Application.Transactions;
 
@@ -11,14 +10,11 @@ namespace Fraga.Application.Transactions;
  */
 public class TransactionService : ITransactionService
 {
-    private readonly AppDbContext _context;
+    private readonly ITransactionRepository _repository;
 
-    /**
-     * Inicializa o serviço com o contexto do banco de dados.
-     */
-    public TransactionService(AppDbContext context)
+    public TransactionService(ITransactionRepository repository)
     {
-        _context = context;
+        _repository = repository;
     }
 
     /**
@@ -33,48 +29,27 @@ public class TransactionService : ITransactionService
      */
     public async Task ProcessAsync(ProcessTransactionRequest request)
     {
-        /**
-         * Impede valores inválidos de serem processados.
-         */
         if (request.Amount <= 0)
             throw new ArgumentException("O valor da transação deve ser maior que zero.");
 
-        /**
-         * Verifica se o evento já foi processado.
-         *
-         * O índice UNIQUE em EventId no banco também protege
-         * contra duplicidade em situações concorrentes.
-         */
-        var transactionAlreadyExists = await _context.Transactions
-            .AnyAsync(transaction => transaction.EventId == request.EventId);
-
-        if (transactionAlreadyExists)
-            throw new InvalidOperationException(
-                "O evento informado já foi processado.");
-
-        /**
-         * Busca a conta que receberá a movimentação.
-         */
-        var account = await _context.Accounts
-            .FirstOrDefaultAsync(account => account.Id == request.AccountId);
-
-        if (account is null)
-            throw new KeyNotFoundException(
-                "A conta informada não foi encontrada.");
-
-        /**
-         * Inicia uma transação no banco.
-         *
-         * O saldo e o histórico serão persistidos juntos.
-         */
-        await using var databaseTransaction =
-            await _context.Database.BeginTransactionAsync();
-
-        try
+        await _repository.ExecuteAtomicAsync(async cancellationToken =>
         {
-            /**
-             * Aplica a movimentação no saldo da conta.
-             */
+            var transactionAlreadyExists = await _repository.ExistsByEventIdAsync(
+                request.EventId,
+                cancellationToken);
+
+            if (transactionAlreadyExists)
+                throw new InvalidOperationException(
+                    "O evento informado já foi processado.");
+
+            var account = await _repository.GetAccountForUpdateAsync(
+                request.AccountId,
+                cancellationToken);
+
+            if (account is null)
+                throw new KeyNotFoundException(
+                    "A conta informada não foi encontrada.");
+
             if (request.Type == Domain.Enums.TransactionType.Credit)
             {
                 account.Credit(request.Amount);
@@ -84,9 +59,6 @@ public class TransactionService : ITransactionService
                 account.Debit(request.Amount);
             }
 
-            /**
-             * Cria o registro permanente do evento financeiro.
-             */
             var transaction = new Transaction(
                 request.EventId,
                 request.AccountId,
@@ -94,28 +66,10 @@ public class TransactionService : ITransactionService
                 request.Amount,
                 request.OccurredAt);
 
-            await _context.Transactions.AddAsync(transaction);
-
-            /**
-             * Persiste saldo e histórico.
-             */
-            await _context.SaveChangesAsync();
-
-            /**
-             * Confirma a operação somente depois
-             * que todas as alterações foram persistidas.
-             */
-            await databaseTransaction.CommitAsync();
-        }
-        catch
-        {
-            /**
-             * Se qualquer operação falhar, nenhuma alteração
-             * financeira deve permanecer no banco.
-             */
-            await databaseTransaction.RollbackAsync();
-
-            throw;
-        }
+            await _repository.AddTransactionAsync(
+                transaction,
+                cancellationToken);
+            await _repository.SaveChangesAsync(cancellationToken);
+        });
     }
 }

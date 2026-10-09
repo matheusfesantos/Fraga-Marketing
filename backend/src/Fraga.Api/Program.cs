@@ -1,5 +1,7 @@
+using Fraga.Application.Abstractions;
 using Fraga.Application.Transactions;
 using Fraga.Infrastructure.Data;
+using Fraga.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +12,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 
 var app = builder.Build();
