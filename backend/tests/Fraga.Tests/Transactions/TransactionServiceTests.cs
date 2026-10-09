@@ -264,10 +264,10 @@ public class TransactionServiceTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(conta);
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>
-        (() => _service.ProcessAsync(requisicao));
+        var exception = await Assert.ThrowsAsync<InsufficientBalanceException>(
+            () => _service.ProcessAsync(requisicao));
 
-        Assert.Contains("Insufficient balance", exception.Message);
+        Assert.Contains("insuficiente", exception.Message);
         Assert.Equal(50m, conta.Balance);
 
         _repositoryMock.Verify(

@@ -1,4 +1,5 @@
 using System.Transactions;
+using Fraga.Domain.Exceptions;
 
 namespace Fraga.Domain.Entities;
 /**
@@ -28,6 +29,7 @@ public class Account
 
     public void Credit(decimal amount)
     {
+        EnsurePositive(amount);
         Balance += amount;
     }
 
@@ -36,11 +38,27 @@ public class Account
         return Balance >= amount;
     }
 
+    /**
+     * Realiza o débito de um valor da conta.
+     *
+     * @param amount O valor a ser debitado.
+     *
+     * @throws InsufficientBalanceException Se o saldo da conta for insuficiente
+     * para realizar o débito.
+     */
     public void Debit(decimal amount)
     {
         if (!CanDebit(amount))
-            throw new InvalidOperationException("Insufficient balance.");
+            throw new InsufficientBalanceException();
 
         Balance -= amount;
+    }
+
+    private static void EnsurePositive(decimal amount)
+    {
+        if (amount <= 0)
+            throw new ArgumentOutOfRangeException(
+                nameof(amount),
+                "O valor da transação deve ser maior que zero.");
     }
 }
