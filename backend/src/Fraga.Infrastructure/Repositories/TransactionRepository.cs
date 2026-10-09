@@ -1,7 +1,9 @@
 using Fraga.Application.Abstractions;
 using Fraga.Domain.Entities;
+using Fraga.Domain.Exceptions;
 using Fraga.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Fraga.Infrastructure.Repositories;
 
@@ -11,6 +13,8 @@ namespace Fraga.Infrastructure.Repositories;
  */
 public class TransactionRepository : ITransactionRepository
 {
+    private const string EventIdUniqueIndexName = "IX_transactions_EventId";
+
     private readonly AppDbContext _context;
 
     public TransactionRepository(AppDbContext context)
@@ -55,14 +59,32 @@ public class TransactionRepository : ITransactionRepository
 
     /**
      * Salva as alterações no contexto.
+     *
+     * Converte a violação do índice único de EventId em
+     * DuplicateEventException, cobrindo a corrida entre requisições
+     * com o mesmo EventId para contas diferentes.
      */
-    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        return _context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException exception)
+            when (exception.InnerException is PostgresException
+            {
+                SqlState: PostgresErrorCodes.UniqueViolation,
+                ConstraintName: EventIdUniqueIndexName
+            })
+        {
+            throw new DuplicateEventException(exception);
+        }
     }
 
     /**
      * Executa uma operação de forma atômica, dentro de uma transação.
+     * Se a operação lançar exceção, o commit não ocorre e a transação
+     * sofre rollback ao ser descartada.
      */
     public async Task ExecuteAtomicAsync(
         Func<CancellationToken, Task> operation,

@@ -13,7 +13,8 @@ public interface ITransactionRepository
     Task AddTransactionAsync(
         Transaction transaction,
         CancellationToken cancellationToken = default);
-    Task SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task SaveChangesAsync(
+        CancellationToken cancellationToken = default);
     Task ExecuteAtomicAsync(
         Func<CancellationToken, Task> operation, 
         CancellationToken cancellationToken = default);

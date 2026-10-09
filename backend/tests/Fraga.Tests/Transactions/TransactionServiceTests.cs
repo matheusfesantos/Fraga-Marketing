@@ -3,6 +3,7 @@ using Fraga.Application.Transactions;
 using Fraga.Application.Transactions.DTOs;
 using Fraga.Domain.Entities;
 using Fraga.Domain.Enums;
+using Fraga.Domain.Exceptions;
 using Moq;
 
 namespace Fraga.Tests.Transactions;
@@ -57,34 +58,48 @@ public class TransactionServiceTests
 
     /**
      * Testa o processamento de um evento que já foi processado.
-     * Deve lançar uma exceção InvalidOperationException.
+     * Deve lançar DuplicateEventException e não gravar nada.
+     * A verificação de duplicidade ocorre após o bloqueio da conta.
      */
     [Fact(DisplayName = "Deve rejeitar evento que já foi processado")]
     public async Task Deve_Rejeitar_Evento_Que_Ja_Foi_Processado()
     {
-        var eventoId = Guid.NewGuid();
+        var conta = new Account(Guid.NewGuid());
 
         var requisicao = new ProcessTransactionRequest(
-                eventoId,
                 Guid.NewGuid(),
+                conta.Id,
                 TransactionType.Credit,
                 100m,
                 DateTime.UtcNow);
 
         _repositoryMock
+            .Setup(repository => repository.GetAccountForUpdateAsync(
+                conta.Id,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(conta);
+
+        _repositoryMock
             .Setup(repository => repository.ExistsByEventIdAsync(
-                eventoId,
+                requisicao.EventId,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>
+        var exception = await Assert.ThrowsAsync<DuplicateEventException>
         (() => _service.ProcessAsync(requisicao));
 
         Assert.Contains("já foi processado", exception.Message);
+        Assert.Equal(0m, conta.Balance);
+
+        _repositoryMock.Verify(
+            repository => repository.GetAccountForUpdateAsync(
+                conta.Id,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
 
         _repositoryMock.Verify(
             repository => repository.ExistsByEventIdAsync(
-                It.Is<Guid>(id => id == eventoId),
+                requisicao.EventId,
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
@@ -101,26 +116,59 @@ public class TransactionServiceTests
     }
 
     /**
-     * Testa o processamento de uma transação para uma conta inexistente.
-     * Deve lançar uma exceção KeyNotFoundException.
+     * Testa que a conta é bloqueada antes da verificação de idempotência.
      */
-    [Fact(DisplayName = "Deve lançar exceção quando a conta não existir")]
-    public async Task Deve_Lancar_Excecao_Quando_Conta_Nao_Existir()
+    [Fact(DisplayName = "Deve bloquear a conta antes de verificar a duplicidade do evento")]
+    public async Task Deve_Bloquear_Conta_Antes_De_Verificar_Duplicidade()
     {
-        var contaId = Guid.NewGuid();
+        var conta = new Account(Guid.NewGuid());
+        var ordemChamadas = new List<string>();
 
         var requisicao = new ProcessTransactionRequest(
-                Guid.NewGuid(),
-                contaId,
-                TransactionType.Credit,
-                100m,
-                DateTime.UtcNow);
+            Guid.NewGuid(),
+            conta.Id,
+            TransactionType.Credit,
+            10m,
+            DateTime.UtcNow);
+
+        _repositoryMock
+            .Setup(repository => repository.GetAccountForUpdateAsync(
+                conta.Id,
+                It.IsAny<CancellationToken>()))
+            .Callback(() => ordemChamadas.Add("lock"))
+            .ReturnsAsync(conta);
 
         _repositoryMock
             .Setup(repository => repository.ExistsByEventIdAsync(
                 requisicao.EventId,
                 It.IsAny<CancellationToken>()))
+            .Callback(() => ordemChamadas.Add("exists"))
             .ReturnsAsync(false);
+
+        await _service.ProcessAsync(requisicao);
+
+        Assert.Equal(new[] { "lock", "exists" }, ordemChamadas);
+    }
+
+    /**
+     * Testa o processamento de uma transação para uma conta inexistente.
+     * Deve lançar uma exceção KeyNotFoundException e não gravar nada.
+     */
+    [Fact(DisplayName = "Deve lançar exceção quando a conta não existir")]
+    public async Task Deve_Lancar_Excecao_Quando_Conta_Nao_Existir()
+    {
+        var requisicao = new ProcessTransactionRequest(
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                TransactionType.Credit,
+                100m,
+                DateTime.UtcNow);
+
+        _repositoryMock
+            .Setup(repository => repository.GetAccountForUpdateAsync(
+                requisicao.AccountId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Account?)null);
 
         var excecao = await Assert.ThrowsAsync<KeyNotFoundException>(
             () => _service.ProcessAsync(requisicao));
@@ -128,8 +176,13 @@ public class TransactionServiceTests
         Assert.Contains("não foi encontrada", excecao.Message);
 
         _repositoryMock.Verify(
-            repository => repository.ExistsByEventIdAsync(
-                It.Is<Guid>(id => id == contaId),
+            repository => repository.AddTransactionAsync(
+                It.IsAny<Transaction>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        _repositoryMock.Verify(
+            repository => repository.SaveChangesAsync(
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
@@ -149,15 +202,6 @@ public class TransactionServiceTests
             TransactionType.Credit,
             150.75m,
             DateTime.UtcNow);
-
-        _repositoryMock
-            .Setup(repository => repository.ExecuteAtomicAsync(
-                It.IsAny<Func<CancellationToken, Task>>(),
-                It.IsAny<CancellationToken>()))
-            .Returns((
-                Func<CancellationToken, Task> operacao,
-                CancellationToken cancellationToken) =>
-                    operacao(cancellationToken));
 
         _repositoryMock
             .Setup(repository => repository.ExistsByEventIdAsync(

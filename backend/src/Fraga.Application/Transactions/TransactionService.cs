@@ -1,6 +1,7 @@
 using Fraga.Application.Abstractions;
 using Fraga.Application.Transactions.DTOs;
 using Fraga.Domain.Entities;
+using Fraga.Domain.Exceptions;
 
 namespace Fraga.Application.Transactions;
 
@@ -34,14 +35,6 @@ public class TransactionService : ITransactionService
 
         await _repository.ExecuteAtomicAsync(async cancellationToken =>
         {
-            var transactionAlreadyExists = await _repository.ExistsByEventIdAsync(
-                request.EventId,
-                cancellationToken);
-
-            if (transactionAlreadyExists)
-                throw new InvalidOperationException(
-                    "O evento informado já foi processado.");
-
             var account = await _repository.GetAccountForUpdateAsync(
                 request.AccountId,
                 cancellationToken);
@@ -49,6 +42,13 @@ public class TransactionService : ITransactionService
             if (account is null)
                 throw new KeyNotFoundException(
                     "A conta informada não foi encontrada.");
+
+            var transactionAlreadyExists = await _repository.ExistsByEventIdAsync(
+                request.EventId,
+                cancellationToken);
+
+            if (transactionAlreadyExists)
+                throw new DuplicateEventException();
 
             if (request.Type == Domain.Enums.TransactionType.Credit)
             {
