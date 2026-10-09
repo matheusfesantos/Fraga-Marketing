@@ -1,4 +1,5 @@
 using Fraga.Application.Abstractions;
+using Fraga.Application.Accounts;
 using Fraga.Application.Transactions;
 using Fraga.Infrastructure.Data;
 using Fraga.Infrastructure.Repositories;
@@ -14,6 +15,8 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+builder.Services.AddScoped<AccountService>();
 
 var app = builder.Build();
 
