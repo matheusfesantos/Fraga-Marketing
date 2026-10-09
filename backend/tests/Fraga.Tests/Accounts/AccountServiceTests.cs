@@ -11,11 +11,14 @@ namespace Fraga.Tests.Accounts;
 public sealed class AccountServiceTests
 {
     private readonly Mock<IAccountRepository> _repositoryMock = new();
+    private readonly Mock<ILogService> _logServiceMock = new();
     private readonly AccountService _service;
 
     public AccountServiceTests()
     {
-        _service = new AccountService(_repositoryMock.Object);
+        _service = new AccountService(
+            _repositoryMock.Object,
+            _logServiceMock.Object);
     }
 
     /**

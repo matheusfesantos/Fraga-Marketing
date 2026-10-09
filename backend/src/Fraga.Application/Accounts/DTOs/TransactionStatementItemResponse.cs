@@ -11,5 +11,6 @@ public sealed record TransactionStatementItemResponse(
     Guid AccountId,
     TransactionType Type,
     decimal Amount,
-    DateTime OccurredAt
+    DateTimeOffset OccurredAt,
+    decimal BalanceAfter
 );

@@ -11,5 +11,5 @@ public record ProcessTransactionRequest(
     Guid AccountId,
     TransactionType Type,
     decimal Amount,
-    DateTime OccurredAt
+    DateTimeOffset OccurredAt
 );

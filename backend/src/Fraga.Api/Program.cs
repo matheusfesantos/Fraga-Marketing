@@ -1,6 +1,7 @@
 using Fraga.Application.Abstractions;
 using Fraga.Application.Accounts;
 using Fraga.Application.Transactions;
+using Fraga.Api.Services;
 using Fraga.Infrastructure.Data;
 using Fraga.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<AccountService>();
+builder.Services.AddSingleton<ILogService, LogService>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 

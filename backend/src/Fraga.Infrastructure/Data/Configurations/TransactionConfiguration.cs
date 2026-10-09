@@ -8,7 +8,23 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
 {
     public void Configure(EntityTypeBuilder<Transaction> builder)
     {
-        builder.ToTable("transactions");
+        builder.ToTable("accounts", table =>
+        {
+            table.HasCheckConstraint(
+            "CK_accounts_balance_non_negative",
+            "\"Balance\" >= 0");
+        });
+
+        builder.ToTable("transactions", table =>
+        {
+            table.HasCheckConstraint(
+                "CK_transactions_amount_positive",
+                "\"Amount\" > 0");
+
+            table.HasCheckConstraint(
+                "CK_transactions_balance_after_non_negative",
+                "\"BalanceAfter\" >= 0");
+        });
 
         builder.HasKey(transaction => transaction.Id);
 
@@ -18,8 +34,14 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
         builder.Property(transaction => transaction.EventId)
             .IsRequired();
 
-        builder.HasIndex(transaction => transaction.EventId)
-            .IsUnique();
+        builder.HasIndex(transaction => new
+        {
+            transaction.AccountId,
+            transaction.OccurredAt,
+            transaction.Id
+        })
+        .IsDescending(false, true, true)
+        .HasDatabaseName("IX_transactions_AccountId_OccurredAt_Id");
 
         builder.Property(transaction => transaction.AccountId)
             .IsRequired();

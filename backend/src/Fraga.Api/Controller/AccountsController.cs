@@ -1,7 +1,6 @@
 using Fraga.Application.Accounts;
 using Fraga.Application.Accounts.DTOs;
 using Fraga.Domain.Entities;
-using Fraga.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Fraga.Api.Controllers;

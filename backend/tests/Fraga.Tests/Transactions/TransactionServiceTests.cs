@@ -14,11 +14,14 @@ namespace Fraga.Tests.Transactions;
 public class TransactionServiceTests
 {
     private readonly Mock<ITransactionRepository> _repositoryMock = new();
+    private readonly Mock<ILogService> _logServiceMock = new();
     private readonly TransactionService _service;
 
     public TransactionServiceTests()
     {
-        _service = new TransactionService(_repositoryMock.Object);
+        _service = new TransactionService(
+            _repositoryMock.Object,
+            _logServiceMock.Object);
 
         _repositoryMock
             .Setup(repository => repository.ExecuteAtomicAsync(
@@ -42,7 +45,7 @@ public class TransactionServiceTests
                 Guid.NewGuid(),
                 TransactionType.Credit,
                 0,
-                DateTime.UtcNow);
+                new DateTimeOffset(2026, 1, 30, 13, 0, 0, TimeSpan.Zero));
 
         var exception = await Assert.ThrowsAsync<ArgumentException>
         (() => _service.ProcessAsync(requisicao));
@@ -71,7 +74,7 @@ public class TransactionServiceTests
                 conta.Id,
                 TransactionType.Credit,
                 100m,
-                DateTime.UtcNow);
+                new DateTimeOffset(2026, 1, 30, 13, 0, 0, TimeSpan.Zero));
 
         _repositoryMock
             .Setup(repository => repository.GetAccountForUpdateAsync(
@@ -129,7 +132,7 @@ public class TransactionServiceTests
             conta.Id,
             TransactionType.Credit,
             10m,
-            DateTime.UtcNow);
+            new DateTimeOffset(2026, 1, 30, 13, 0, 0, TimeSpan.Zero));
 
         _repositoryMock
             .Setup(repository => repository.GetAccountForUpdateAsync(
@@ -162,7 +165,7 @@ public class TransactionServiceTests
                 Guid.NewGuid(),
                 TransactionType.Credit,
                 100m,
-                DateTime.UtcNow);
+                new DateTimeOffset(2026, 1, 30, 13, 0, 0, TimeSpan.Zero));
 
         _repositoryMock
             .Setup(repository => repository.GetAccountForUpdateAsync(
@@ -201,7 +204,7 @@ public class TransactionServiceTests
             conta.Id,
             TransactionType.Credit,
             150.75m,
-            DateTime.UtcNow);
+            new DateTimeOffset(2026, 1, 30, 13, 0, 0, TimeSpan.Zero));
 
         _repositoryMock
             .Setup(repository => repository.ExistsByEventIdAsync(
@@ -250,7 +253,7 @@ public class TransactionServiceTests
                 conta.Id,
                 TransactionType.Debit,
                 100m,
-                DateTime.UtcNow);
+                new DateTimeOffset(2026, 1, 30, 13, 0, 0, TimeSpan.Zero));
 
         _repositoryMock
             .Setup(repository => repository.ExistsByEventIdAsync(

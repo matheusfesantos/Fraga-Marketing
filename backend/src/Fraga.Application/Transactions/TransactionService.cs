@@ -12,10 +12,14 @@ namespace Fraga.Application.Transactions;
 public class TransactionService : ITransactionService
 {
     private readonly ITransactionRepository _repository;
+    private readonly ILogService _logService;
 
-    public TransactionService(ITransactionRepository repository)
+    public TransactionService(
+        ITransactionRepository repository,
+        ILogService logService)
     {
         _repository = repository;
+        _logService = logService;
     }
 
     /**
@@ -30,6 +34,9 @@ public class TransactionService : ITransactionService
      */
     public async Task ProcessAsync(ProcessTransactionRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
+        ValidateRequest(request);
+
         if (request.Amount <= 0)
             throw new ArgumentException("O valor da transação deve ser maior que zero.");
 
@@ -40,15 +47,28 @@ public class TransactionService : ITransactionService
                 cancellationToken);
 
             if (account is null)
+            {
+                _logService.Warning(
+                    "Transação rejeitada: conta não encontrada. EventId: {EventId}, AccountId: {AccountId}",
+                    request.EventId,
+                    request.AccountId);
+
                 throw new KeyNotFoundException(
                     "A conta informada não foi encontrada.");
+            }
 
             var transactionAlreadyExists = await _repository.ExistsByEventIdAsync(
                 request.EventId,
                 cancellationToken);
 
             if (transactionAlreadyExists)
+            {
+                _logService.Warning(
+                    "Transação rejeitada por evento duplicado. EventId: {EventId}",
+                    request.EventId);
+
                 throw new DuplicateEventException();
+            }
 
             if (request.Type == Domain.Enums.TransactionType.Credit)
             {
@@ -64,12 +84,38 @@ public class TransactionService : ITransactionService
                 request.AccountId,
                 request.Type,
                 request.Amount,
-                request.OccurredAt);
+                request.OccurredAt,
+                account.Balance);
 
             await _repository.AddTransactionAsync(
                 transaction,
                 cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
         });
+
+        _logService.Information(
+            "Transação processada. EventId: {EventId}, AccountId: {AccountId}, Type: {TransactionType}",
+            request.EventId,
+            request.AccountId,
+            request.Type);
+    }
+
+    private static void ValidateRequest(ProcessTransactionRequest request)
+    {
+        if (request.EventId == Guid.Empty)
+            throw new ArgumentException(
+                "O identificador do evento não pode ser vazio.");
+
+        if (request.AccountId == Guid.Empty)
+            throw new ArgumentException(
+                "O identificador da conta não pode ser vazio.");
+
+        if (!Enum.IsDefined(request.Type))
+            throw new ArgumentException(
+                "O tipo da transação é inválido.");
+
+        if (request.Amount <= 0)
+            throw new ArgumentException(
+                "O valor da transação deve ser maior que zero.");
     }
 }

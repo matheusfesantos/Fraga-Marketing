@@ -6,7 +6,9 @@ namespace Fraga.Application.Accounts;
 /**
  * Serviço responsável pelas operações relacionadas a contas.
  */
-public sealed class AccountService(IAccountRepository repository)
+public sealed class AccountService(
+    IAccountRepository repository,
+    ILogService logService)
 {
     /**
      * Obtém todas as contas.
@@ -19,12 +21,18 @@ public sealed class AccountService(IAccountRepository repository)
     {
         var accounts = await repository.GetAllAsync(cancellationToken);
 
-        return accounts
+        var responses = accounts
            .Select(account => new AccountResponse(
                 account.Id,
                 account.Balance
             ))
             .ToList();
+
+        logService.Information(
+             "Consulta de contas concluída. Count: {AccountCount}",
+             responses.Count);
+
+        return responses;
     }
 
     /**
@@ -47,6 +55,12 @@ public sealed class AccountService(IAccountRepository repository)
         var account = await repository.GetByIdAsync(
             accountId,
             cancellationToken);
+
+        logService.Information(
+            account is null
+                ? "Consulta de conta concluída: conta não encontrada. AccountId: {AccountId}"
+                : "Consulta de conta concluída. AccountId: {AccountId}",
+            accountId);
 
         return account is null
             ? null
@@ -89,7 +103,13 @@ public sealed class AccountService(IAccountRepository repository)
             cancellationToken);
 
         if (account is null)
+        {
+            logService.Warning(
+                "Consulta de extrato rejeitada: conta não encontrada. AccountId: {AccountId}",
+                accountId);
+
             throw new KeyNotFoundException("Conta não encontrada.");
+        }
 
         var transactions = await repository.GetStatementAsync(
             accountId,
@@ -108,7 +128,8 @@ public sealed class AccountService(IAccountRepository repository)
                 transaction.AccountId,
                 transaction.Type,
                 transaction.Amount,
-                transaction.OccurredAt
+                transaction.OccurredAt,
+                transaction.BalanceAfter
             )
         ).ToList();
 
@@ -120,6 +141,14 @@ public sealed class AccountService(IAccountRepository repository)
         }
 
         var totalPages = CalculateTotalPages(totalCount, pageSize);
+
+        logService.Information(
+            "Consulta de extrato concluída. AccountId: {AccountId}, Page: {Page}, PageSize: {PageSize}, ItemCount: {ItemCount}, TotalCount: {TotalCount}",
+            accountId,
+            page,
+            pageSize,
+            items.Count,
+            totalCount);
 
         return new PagedResponse<TransactionStatementItemResponse>(
             items,

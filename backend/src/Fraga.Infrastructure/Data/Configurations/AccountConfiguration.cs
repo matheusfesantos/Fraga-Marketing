@@ -8,7 +8,12 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
 {
     public void Configure(EntityTypeBuilder<Account> builder)
     {
-        builder.ToTable("accounts");
+        builder.ToTable("accounts", table =>
+        {
+            table.HasCheckConstraint(
+            "CK_accounts_balance_non_negative",
+            "\"Balance\" >= 0");
+        });
 
         builder.HasKey(account => account.Id);
 

@@ -20,7 +20,9 @@ public class Transaction
 
     public decimal Amount { get; private set; }
 
-    public DateTime OccurredAt { get; private set; }
+    public DateTimeOffset OccurredAt { get; private set; }
+
+    public decimal BalanceAfter { get; private set; }
 
     public Account Account { get; private set; } = null!;
 
@@ -36,13 +38,15 @@ public class Transaction
      * @param type Tipo da transação (crédito ou débito).
      * @param amount Valor da transação.
      * @param occurredAt Data e hora em que a transação ocorreu.
+     * @param balanceAfter Saldo da conta após a transação.
      */
     public Transaction(
         Guid eventId,
         Guid accountId,
         TransactionType type,
         decimal amount,
-        DateTime occurredAt)
+        DateTimeOffset occurredAt,
+        decimal balanceAfter)
     {
         Id = Guid.NewGuid();
         EventId = eventId;
@@ -50,5 +54,6 @@ public class Transaction
         Type = type;
         Amount = amount;
         OccurredAt = occurredAt;
+        BalanceAfter = balanceAfter;
     }
 }
