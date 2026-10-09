@@ -51,6 +51,18 @@ public sealed class AccountService(IAccountRepository repository)
             : new AccountResponse(account.Id, account.Balance);
     }
 
+    /**
+     * Obtém o extrato de transações de uma conta.
+     *
+     * @param accountId O ID da conta.
+     * @param page O número da página a ser obtida.
+     * @param pageSize O tamanho da página.
+     * @param cancellationToken Token de cancelamento para operações assíncronas.
+     * @return Uma resposta paginada contendo os itens do extrato de transações.
+     * @throws ArgumentException Se o ID da conta for vazio.
+     * @throws ArgumentOutOfRangeException Se o número da página ou tamanho da página forem inválidos.
+     * @throws KeyNotFoundException Se a conta não for encontrada.
+     */
     public async Task<PagedResponse<TransactionStatementItemResponse>> GetStatementAsync(
         Guid accountId,
         int page,
@@ -114,6 +126,14 @@ public sealed class AccountService(IAccountRepository repository)
         );
     }
 
+    /**
+     * Calcula o número total de páginas com base no total de itens e no tamanho da página.
+     *
+     * @param totalCount O número total de itens.
+     * @param pageSize O tamanho da página.
+     * @return O número total de páginas.
+     * @throws ArgumentOutOfRangeException Se o total de itens for negativo ou o tamanho da página for menor ou igual a zero.
+     */
     private static int CalculateTotalPages(int totalCount, int pageSize)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(totalCount);
