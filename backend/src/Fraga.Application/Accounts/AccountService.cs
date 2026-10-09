@@ -30,9 +30,9 @@ public sealed class AccountService(IAccountRepository repository)
     /**
      * Obtém uma conta pelo seu ID.
      *
-     * @param accountId O ID da conta a ser obtida.
+     * @param accountId O ID da conta.
      * @param cancellationToken Token de cancelamento para operações assíncronas.
-     * @return A resposta da conta ou nulo se não encontrada.
+     * @return Uma resposta de conta ou nula se a conta não for encontrada.
      * @throws ArgumentException Se o ID da conta for vazio.
      */
     public async Task<AccountResponse?> GetByIdAsync(
@@ -40,9 +40,11 @@ public sealed class AccountService(IAccountRepository repository)
         CancellationToken cancellationToken = default)
     {
         if (accountId == Guid.Empty)
-            throw new ArgumentException("O ID da conta não pode ser vazio.");
+            throw new ArgumentException(
+                "O ID da conta não pode ser vazio.",
+    nameof(accountId));
 
-        var account = await repository.GetByEventIdAsync(
+        var account = await repository.GetByIdAsync(
             accountId,
             cancellationToken);
 
@@ -70,7 +72,9 @@ public sealed class AccountService(IAccountRepository repository)
         CancellationToken cancellationToken = default)
     {
         if (accountId == Guid.Empty)
-            throw new ArgumentException("O ID da conta não pode ser vazio.");
+            throw new ArgumentException(
+                "O ID da conta não pode ser vazio.",
+                nameof(accountId));
 
         if (page < 1)
             throw new ArgumentOutOfRangeException(
@@ -80,7 +84,7 @@ public sealed class AccountService(IAccountRepository repository)
             throw new ArgumentOutOfRangeException(
                 nameof(pageSize), "O tamanho da página deve estar entre 1 e 100.");
 
-        var account = await repository.GetByEventIdAsync(
+        var account = await repository.GetByIdAsync(
             accountId,
             cancellationToken);
 

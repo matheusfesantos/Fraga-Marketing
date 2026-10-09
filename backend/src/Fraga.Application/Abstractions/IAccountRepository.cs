@@ -11,7 +11,11 @@ public interface IAccountRepository
     Task<IReadOnlyList<Account>> GetAllAsync(
         CancellationToken cancellationToken = default);
 
-    Task<Account?> GetByEventIdAsync(
+    Task<bool> ExistsAsync(
+        Guid accountId, 
+        CancellationToken cancellationToken);
+
+    Task<Account?> GetByIdAsync(
         Guid accountId, 
         CancellationToken cancellationToken);
 

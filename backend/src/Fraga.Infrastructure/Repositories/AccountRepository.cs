@@ -24,9 +24,21 @@ public sealed class AccountRepository(AppDbContext context) : IAccountRepository
     }
 
     /**
+     * Verifica se uma conta existe pelo ID.
+     */
+    public async Task<bool> ExistsAsync(
+        Guid accountId, 
+        CancellationToken cancellationToken)
+    {
+        return await context.Accounts
+            .AsNoTracking()
+            .AnyAsync(a => a.Id == accountId, cancellationToken);
+    }
+
+    /**
      * Retorna uma conta pelo ID do evento.
      */
-    public Task<Account?> GetByEventIdAsync(
+    public Task<Account?> GetByIdAsync(
         Guid accountId, 
         CancellationToken cancellationToken)
     {
