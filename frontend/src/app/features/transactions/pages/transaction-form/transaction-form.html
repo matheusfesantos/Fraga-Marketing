@@ -1,1 +1,101 @@
-<p>transaction-form works!</p>
+<section class="page-header">
+    <div>
+        <p class="eyebrow">MOVIMENTAÇÃO FINANCEIRA</p>
+        <h1>Nova transação</h1>
+        <p class="page-description">
+            Registre um crédito ou débito em uma das contas.
+        </p>
+    </div>
+</section>
+
+<section class="form-card">
+    <div class="form-card-header">
+        <div class="form-icon">↔</div>
+        <div>
+            <h2>Dados da transação</h2>
+            <p>Preencha os campos abaixo para continuar.</p>
+        </div>
+    </div>
+
+    @if (error) {
+    <div class="feedback feedback-error" role="alert">
+        <strong>Não foi possível concluir</strong>
+        <p>{{ error }}</p>
+    </div>
+    }
+
+    @if (success) {
+    <div class="feedback feedback-success" role="status">
+        <strong>Transação registrada!</strong>
+        <p>{{ success }}</p>
+    </div>
+    }
+
+    <form (ngSubmit)="submit()">
+        <div class="form-field">
+            <label for="accountId">Conta</label>
+            <select id="accountId" name="accountId" [(ngModel)]="accountId" required
+                [disabled]="loadingAccounts || submitting || accounts.length === 0">
+                <option value="" disabled>Selecione uma conta</option>
+                @for (account of accounts; track account.id) {
+                <option [value]="account.id">
+                    {{ account.name }} — {{ account.balance | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                </option>
+                }
+            </select>
+
+            @if (loadingAccounts) {
+            <small>Carregando contas...</small>
+            }
+        </div>
+
+        <div class="form-field">
+            <label>Tipo de transação</label>
+
+            <div class="type-options">
+                <label class="type-option" [class.selected-credit]="type === 'CREDIT'">
+                    <input type="radio" name="type" [(ngModel)]="type" value="CREDIT" [disabled]="submitting" />
+                    <span class="type-symbol credit-symbol">+</span>
+                    <span>
+                        <strong>Crédito</strong>
+                        <small>Adicionar saldo</small>
+                    </span>
+                </label>
+
+                <label class="type-option" [class.selected-debit]="type === 'DEBIT'">
+                    <input type="radio" name="type" [(ngModel)]="type" value="DEBIT" [disabled]="submitting" />
+                    <span class="type-symbol debit-symbol">−</span>
+                    <span>
+                        <strong>Débito</strong>
+                        <small>Retirar saldo</small>
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-field">
+            <label for="amount">Valor da transação</label>
+
+            <div class="amount-input">
+                <span>R$</span>
+                <input id="amount" name="amount" type="number" [(ngModel)]="amount" min="0.01" step="0.01"
+                    placeholder="0,00" required [disabled]="submitting" />
+            </div>
+
+            <small>Informe um valor maior que zero.</small>
+        </div>
+
+        <div class="form-actions">
+            <a routerLink="/contas" class="button-secondary">Cancelar</a>
+
+            <button type="submit" class="button-primary"
+                [disabled]="loadingAccounts || submitting || accounts.length === 0">
+                @if (submitting) {
+                Registrando...
+                } @else {
+                Registrar transação
+                }
+            </button>
+        </div>
+    </form>
+</section>
