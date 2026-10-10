@@ -12,6 +12,26 @@ namespace Fraga.Api.Controllers;
 [Route("api/accounts")]
 public class AccountsController(AccountService service) : ControllerBase
 {
+    private const string GetAccountByIdRoute = "GetAccountById";
+
+    /// <summary>
+    /// Cria uma nova conta com saldo zero.
+    /// </summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreateAsync(
+        [FromBody] CreateAccountRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var account = await service.CreateAsync(request, cancellationToken);
+
+        return CreatedAtRoute(
+            GetAccountByIdRoute,
+            new { accountId = account.Id },
+            account);
+    }
+
     /// <summary>
     /// Lista todas as contas com seus saldos atuais.
     /// </summary>
@@ -28,7 +48,7 @@ public class AccountsController(AccountService service) : ControllerBase
     /// <summary>
     /// Retorna uma conta pelo seu identificador.
     /// </summary>
-    [HttpGet("{accountId:guid}")]
+    [HttpGet("{accountId:guid}", Name = GetAccountByIdRoute)]
     [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

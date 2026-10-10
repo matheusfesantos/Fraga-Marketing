@@ -12,12 +12,16 @@ public interface IAccountRepository
         CancellationToken cancellationToken = default);
 
     Task<bool> ExistsAsync(
-        Guid accountId, 
+        Guid accountId,
         CancellationToken cancellationToken);
 
     Task<Account?> GetByIdAsync(
-        Guid accountId, 
+        Guid accountId,
         CancellationToken cancellationToken);
+
+    Task AddAsync(
+        Account account,
+        CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Transaction>> GetStatementAsync(
         Guid accountId,

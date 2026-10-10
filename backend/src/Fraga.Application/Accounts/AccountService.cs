@@ -1,5 +1,6 @@
-using Fraga.Application.Accounts.DTOs;
 using Fraga.Application.Abstractions;
+using Fraga.Application.Accounts.DTOs;
+using Fraga.Domain.Entities;
 
 namespace Fraga.Application.Accounts;
 
@@ -10,6 +11,32 @@ public sealed class AccountService(
     IAccountRepository repository,
     ILogService logService)
 {
+    /**
+     * Cria uma nova conta com saldo zero.
+     *
+     * @param request Dados da conta a ser criada.
+     * @param cancellationToken Token de cancelamento para operações assíncronas.
+     * @return A conta criada.
+     * @throws ArgumentException Se o nome da conta for inválido.
+     */
+    public async Task<AccountResponse> CreateAsync(
+        CreateAccountRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        // A validação do nome é feita pelo domínio.
+        var account = new Account(Guid.NewGuid(), request.Name);
+
+        await repository.AddAsync(account, cancellationToken);
+
+        logService.Information(
+            "Conta criada. AccountId: {AccountId}",
+            account.Id);
+
+        return ToResponse(account);
+    }
+
     /**
      * Obtém todas as contas.
      *
@@ -22,15 +49,12 @@ public sealed class AccountService(
         var accounts = await repository.GetAllAsync(cancellationToken);
 
         var responses = accounts
-           .Select(account => new AccountResponse(
-                account.Id,
-                account.Balance
-            ))
+            .Select(ToResponse)
             .ToList();
 
         logService.Information(
-             "Consulta de contas concluída. Count: {AccountCount}",
-             responses.Count);
+            "Consulta de contas concluída. Count: {AccountCount}",
+            responses.Count);
 
         return responses;
     }
@@ -50,7 +74,7 @@ public sealed class AccountService(
         if (accountId == Guid.Empty)
             throw new ArgumentException(
                 "O ID da conta não pode ser vazio.",
-    nameof(accountId));
+                nameof(accountId));
 
         var account = await repository.GetByIdAsync(
             accountId,
@@ -64,7 +88,7 @@ public sealed class AccountService(
 
         return account is null
             ? null
-            : new AccountResponse(account.Id, account.Balance);
+            : ToResponse(account);
     }
 
     /**
@@ -133,13 +157,6 @@ public sealed class AccountService(
             )
         ).ToList();
 
-        if (pageSize <= 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(pageSize),
-                "O tamanho da página deve ser maior que zero.");
-        }
-
         var totalPages = CalculateTotalPages(totalCount, pageSize);
 
         logService.Information(
@@ -157,6 +174,11 @@ public sealed class AccountService(
             totalCount,
             totalPages
         );
+    }
+
+    private static AccountResponse ToResponse(Account account)
+    {
+        return new AccountResponse(account.Id, account.Name, account.Balance);
     }
 
     /**

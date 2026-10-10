@@ -5,5 +5,6 @@ namespace Fraga.Application.Accounts.DTOs;
  */
 public sealed record AccountResponse(
     Guid Id,
+    string name,
     decimal Balance
 );

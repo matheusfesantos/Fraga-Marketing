@@ -19,7 +19,8 @@ public sealed class AccountRepository(AppDbContext context) : IAccountRepository
     {
         return await context.Accounts
             .AsNoTracking()
-            .OrderBy(a => a.Id)
+            .OrderBy(a => a.Name)
+            .ThenBy(a => a.Id)
             .ToListAsync(cancellationToken);
     }
 
@@ -27,7 +28,7 @@ public sealed class AccountRepository(AppDbContext context) : IAccountRepository
      * Verifica se uma conta existe pelo ID.
      */
     public async Task<bool> ExistsAsync(
-        Guid accountId, 
+        Guid accountId,
         CancellationToken cancellationToken)
     {
         return await context.Accounts
@@ -36,10 +37,10 @@ public sealed class AccountRepository(AppDbContext context) : IAccountRepository
     }
 
     /**
-     * Retorna uma conta pelo ID do evento.
+     * Retorna uma conta pelo seu ID.
      */
     public Task<Account?> GetByIdAsync(
-        Guid accountId, 
+        Guid accountId,
         CancellationToken cancellationToken)
     {
         return context.Accounts
@@ -49,12 +50,23 @@ public sealed class AccountRepository(AppDbContext context) : IAccountRepository
     }
 
     /**
+     * Persiste uma nova conta.
+     */
+    public async Task AddAsync(
+        Account account,
+        CancellationToken cancellationToken = default)
+    {
+        await context.Accounts.AddAsync(account, cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
+    /**
      * Retorna o extrato de uma conta.
      */
     public async Task<IReadOnlyList<Transaction>> GetStatementAsync(
-        Guid accountId, 
-        int page, 
-        int pageSize, 
+        Guid accountId,
+        int page,
+        int pageSize,
         CancellationToken cancellationToken)
     {
         return await context.Transactions
@@ -68,10 +80,10 @@ public sealed class AccountRepository(AppDbContext context) : IAccountRepository
     }
 
     /**
-     * Retorna o extrato de uma conta.
+     * Retorna o total de transações de uma conta.
      */
     public async Task<int> CountStatementAsync(
-        Guid accountId, 
+        Guid accountId,
         CancellationToken cancellationToken)
     {
         return await context.Transactions
