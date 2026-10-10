@@ -118,7 +118,16 @@ dotnet test backend/Fraga.slnx
 
 Os testes de integração sobem um PostgreSQL 16 com Testcontainers. É necessário ter Docker em execução para executar essa parte da suíte.
 
-O workflow de CI em `.github/workflows/ci.yml` restaura, compila em Release e executa os testes com .NET 10.
+Para validar o frontend Angular localmente:
+
+```bash
+cd frontend
+npm ci --legacy-peer-deps
+npm run build
+npm test -- --watch=false
+```
+
+O workflow de CI em `.github/workflows/ci.yml` executa em paralelo o build e os testes do frontend Angular (Node.js 22) e restaura, compila em Release e testa o backend (.NET 10), em pushes e pull requests para `develop` e `main`. O pipeline valida as alterações, mas não faz deploy automático.
 
 ## Escopo
 
