@@ -60,27 +60,17 @@ public class TransactionServiceTests
     }
 
     /**
-     * Testa o processamento de um evento que já foi processado.
-     * Deve lançar DuplicateEventException e não gravar nada.
-     * A verificação de duplicidade ocorre após o bloqueio da conta.
+     * Um evento duplicado deve ser rejeitado antes de validar a conta informada.
      */
-    [Fact(DisplayName = "Deve rejeitar evento que já foi processado")]
-    public async Task Deve_Rejeitar_Evento_Que_Ja_Foi_Processado()
+    [Fact(DisplayName = "Deve rejeitar evento duplicado mesmo quando a conta informada não existe")]
+    public async Task Deve_Rejeitar_Evento_Duplicado_Mesmo_Quando_Conta_Nao_Existe()
     {
-        var conta = new Account(Guid.NewGuid(), "Conta de teste");
-
         var requisicao = new ProcessTransactionRequest(
                 Guid.NewGuid(),
-                conta.Id,
+                Guid.NewGuid(),
                 TransactionType.Credit,
                 100m,
                 new DateTimeOffset(2026, 1, 30, 13, 0, 0, TimeSpan.Zero));
-
-        _repositoryMock
-            .Setup(repository => repository.GetAccountForUpdateAsync(
-                conta.Id,
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(conta);
 
         _repositoryMock
             .Setup(repository => repository.ExistsByEventIdAsync(
@@ -92,17 +82,22 @@ public class TransactionServiceTests
         (() => _service.ProcessAsync(requisicao));
 
         Assert.Contains("já foi processado", exception.Message);
-        Assert.Equal(0m, conta.Balance);
 
         _repositoryMock.Verify(
             repository => repository.GetAccountForUpdateAsync(
-                conta.Id,
+                requisicao.AccountId,
                 It.IsAny<CancellationToken>()),
-            Times.Once);
+            Times.Never);
 
         _repositoryMock.Verify(
             repository => repository.ExistsByEventIdAsync(
                 requisicao.EventId,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        _repositoryMock.Verify(
+            repository => repository.ExecuteAtomicAsync(
+                It.IsAny<Func<CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
@@ -119,10 +114,11 @@ public class TransactionServiceTests
     }
 
     /**
-     * Testa que a conta é bloqueada antes da verificação de idempotência.
+     * A duplicidade é verificada antes do bloqueio e novamente depois dele,
+     * para cobrir eventos simultâneos enquanto a conta estava bloqueada.
      */
-    [Fact(DisplayName = "Deve bloquear a conta antes de verificar a duplicidade do evento")]
-    public async Task Deve_Bloquear_Conta_Antes_De_Verificar_Duplicidade()
+    [Fact(DisplayName = "Deve verificar duplicidade antes e depois de bloquear a conta")]
+    public async Task Deve_Verificar_Duplicidade_Antes_E_Depois_De_Bloquear_Conta()
     {
         var conta = new Account(Guid.NewGuid(), "Conta de teste");
         var ordemChamadas = new List<string>();
@@ -150,7 +146,7 @@ public class TransactionServiceTests
 
         await _service.ProcessAsync(requisicao);
 
-        Assert.Equal(new[] { "lock", "exists" }, ordemChamadas);
+        Assert.Equal(new[] { "exists", "lock", "exists" }, ordemChamadas);
     }
 
     /**

@@ -46,6 +46,8 @@ public class TransactionService : ITransactionService
 
         await _repository.ExecuteAtomicAsync(async token =>
         {
+            await EnsureEventNotProcessedAsync(request.EventId, token);
+
             var account = await _repository.GetAccountForUpdateAsync(
                 request.AccountId,
                 token);
@@ -61,18 +63,7 @@ public class TransactionService : ITransactionService
                     "A conta informada não foi encontrada.");
             }
 
-            var transactionAlreadyExists = await _repository.ExistsByEventIdAsync(
-                request.EventId,
-                token);
-
-            if (transactionAlreadyExists)
-            {
-                _logService.Warning(
-                    "Transação rejeitada por evento duplicado. EventId: {EventId}",
-                    request.EventId);
-
-                throw new DuplicateEventException();
-            }
+            await EnsureEventNotProcessedAsync(request.EventId, token);
 
             if (request.Type == TransactionType.Credit)
             {
@@ -108,6 +99,20 @@ public class TransactionService : ITransactionService
             request.Type);
 
         return response!;
+    }
+
+    private async Task EnsureEventNotProcessedAsync(
+        Guid eventId,
+        CancellationToken cancellationToken)
+    {
+        if (!await _repository.ExistsByEventIdAsync(eventId, cancellationToken))
+            return;
+
+        _logService.Warning(
+            "Transação rejeitada por evento duplicado. EventId: {EventId}",
+            eventId);
+
+        throw new DuplicateEventException();
     }
 
     private static void ValidateRequest(ProcessTransactionRequest request)
