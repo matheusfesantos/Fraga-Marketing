@@ -37,7 +37,7 @@ jobs:
 
       - name: Test
         working-directory: frontend
-        run: npm test -- --watch=false
+        run: npm run test:jest -- --runInBand
 
   backend:
     name: Backend - Build e Testes
