@@ -1,6 +1,7 @@
 using Fraga.Application.Abstractions;
 using Fraga.Application.Accounts;
 using Fraga.Domain.Entities;
+using Fraga.Domain.Exceptions;
 using Moq;
 
 namespace Fraga.Tests.Accounts;
@@ -111,7 +112,7 @@ public sealed class AccountServiceTests
                 pageSize: 10));
 
         Assert.Equal("page", exception.ParamName);
-        
+
         _repositoryMock.Verify(
             repository => repository.GetStatementAsync(
                 It.IsAny<Guid>(),
@@ -141,7 +142,7 @@ public sealed class AccountServiceTests
                 pageSize: tamanhoPagina));
 
         Assert.Equal("pageSize", exception.ParamName);
-        
+
         _repositoryMock.Verify(
             repository => repository.GetStatementAsync(
                 It.IsAny<Guid>(),
@@ -179,5 +180,81 @@ public sealed class AccountServiceTests
                 It.IsAny<int>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
+    }
+
+    public sealed class AccountTests
+    {
+        [Fact(DisplayName = "Deve criar a conta com saldo zero")]
+        public void NovaConta_ComecaComSaldoZero()
+        {
+            var conta = new Account(Guid.NewGuid());
+
+            Assert.Equal(0m, conta.Balance);
+        }
+
+        [Fact(DisplayName = "Deve aumentar o saldo ao creditar")]
+        public void Credit_ValorValido_AumentaSaldo()
+        {
+            var conta = new Account(Guid.NewGuid());
+
+            conta.Credit(100.50m);
+
+            Assert.Equal(100.50m, conta.Balance);
+        }
+
+        [Theory(DisplayName = "Deve rejeitar crédito com valor não positivo")]
+        [InlineData(0)]
+        [InlineData(-10)]
+        public void Credit_ValorNaoPositivo_LancaExcecao(decimal valor)
+        {
+            var conta = new Account(Guid.NewGuid());
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => conta.Credit(valor));
+            Assert.Equal(0m, conta.Balance);
+        }
+
+        [Fact(DisplayName = "Deve reduzir o saldo ao debitar")]
+        public void Debit_SaldoSuficiente_ReduzSaldo()
+        {
+            var conta = new Account(Guid.NewGuid());
+            conta.Credit(100m);
+
+            conta.Debit(40m);
+
+            Assert.Equal(60m, conta.Balance);
+        }
+
+        [Fact(DisplayName = "Deve permitir debitar exatamente o saldo disponível")]
+        public void Debit_ValorIgualAoSaldo_ZeraSaldo()
+        {
+            var conta = new Account(Guid.NewGuid());
+            conta.Credit(100m);
+
+            conta.Debit(100m);
+
+            Assert.Equal(0m, conta.Balance);
+        }
+
+        [Fact(DisplayName = "Deve rejeitar débito acima do saldo sem alterá-lo")]
+        public void Debit_SaldoInsuficiente_LancaExcecaoESaldoIntacto()
+        {
+            var conta = new Account(Guid.NewGuid());
+            conta.Credit(50m);
+
+            Assert.Throws<InsufficientBalanceException>(() => conta.Debit(50.01m));
+            Assert.Equal(50m, conta.Balance);
+        }
+
+        [Theory(DisplayName = "Deve rejeitar débito com valor não positivo")]
+        [InlineData(0)]
+        [InlineData(-10)]
+        public void Debit_ValorNaoPositivo_LancaExcecaoESaldoIntacto(decimal valor)
+        {
+            var conta = new Account(Guid.NewGuid());
+            conta.Credit(100m);
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => conta.Debit(valor));
+            Assert.Equal(100m, conta.Balance);
+        }
     }
 }
