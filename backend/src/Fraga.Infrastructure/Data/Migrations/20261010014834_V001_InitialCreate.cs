@@ -21,6 +21,7 @@ namespace Fraga.Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_accounts", x => x.Id);
+                    table.CheckConstraint("CK_accounts_balance_non_negative", "\"Balance\" >= 0");
                 });
 
             migrationBuilder.CreateTable(
@@ -32,11 +33,14 @@ namespace Fraga.Infrastructure.Data.Migrations
                     AccountId = table.Column<Guid>(type: "uuid", nullable: false),
                     Type = table.Column<string>(type: "text", nullable: false),
                     Amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    OccurredAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    OccurredAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    BalanceAfter = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_transactions", x => x.Id);
+                    table.CheckConstraint("CK_transactions_amount_positive", "\"Amount\" > 0");
+                    table.CheckConstraint("CK_transactions_balance_after_non_negative", "\"BalanceAfter\" >= 0");
                     table.ForeignKey(
                         name: "FK_transactions_accounts_AccountId",
                         column: x => x.AccountId,
@@ -46,9 +50,10 @@ namespace Fraga.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_transactions_AccountId",
+                name: "IX_transactions_AccountId_OccurredAt_Id",
                 table: "transactions",
-                column: "AccountId");
+                columns: new[] { "AccountId", "OccurredAt", "Id" },
+                descending: new[] { false, true, true });
 
             migrationBuilder.CreateIndex(
                 name: "IX_transactions_EventId",

@@ -8,6 +8,7 @@ using Fraga.Infrastructure.Data;
 using Fraga.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 
+
 const string CorsPolicyName = "FrontendPolicy";
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +21,7 @@ builder.Services
     .AddControllers()
     .AddJsonOptions(options =>
     {
+        // Contrato: "CREDIT" | "DEBIT" na entrada e na saída.
         options.JsonSerializerOptions.Converters.Add(
             new JsonStringEnumConverter(
                 JsonNamingPolicy.SnakeCaseUpper,
@@ -55,9 +57,14 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await DbInitializer.InitializeAsync(context);
+}
+
 app.UseExceptionHandler();
 
-// Documentação sempre disponível (inclusive dentro do Docker).
 app.MapOpenApi();
 app.UseSwaggerUI(options =>
 {

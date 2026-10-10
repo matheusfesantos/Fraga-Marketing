@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Fraga.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261008002523_V001_InitialCreate")]
+    [Migration("20261010014834_V001_InitialCreate")]
     partial class V001_InitialCreate
     {
         /// <inheritdoc />
@@ -36,7 +36,10 @@ namespace Fraga.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("accounts", (string)null);
+                    b.ToTable("accounts", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_accounts_balance_non_negative", "\"Balance\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("Fraga.Domain.Entities.Transaction", b =>
@@ -51,10 +54,14 @@ namespace Fraga.Infrastructure.Data.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
+                    b.Property<decimal>("BalanceAfter")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<Guid>("EventId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("OccurredAt")
+                    b.Property<DateTimeOffset>("OccurredAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Type")
@@ -63,12 +70,20 @@ namespace Fraga.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountId");
-
                     b.HasIndex("EventId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("IX_transactions_EventId");
 
-                    b.ToTable("transactions", (string)null);
+                    b.HasIndex("AccountId", "OccurredAt", "Id")
+                        .IsDescending(false, true, true)
+                        .HasDatabaseName("IX_transactions_AccountId_OccurredAt_Id");
+
+                    b.ToTable("transactions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_transactions_amount_positive", "\"Amount\" > 0");
+
+                            t.HasCheckConstraint("CK_transactions_balance_after_non_negative", "\"BalanceAfter\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("Fraga.Domain.Entities.Transaction", b =>
