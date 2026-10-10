@@ -264,37 +264,6 @@
   }
 }
 
-.feedback {
-  padding: 14px 16px;
-  margin-bottom: 22px;
-  border: 1px solid;
-  border-radius: 10px;
-
-  strong {
-    display: block;
-    margin-bottom: 4px;
-    font-size: 13px;
-  }
-
-  p {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.5;
-  }
-}
-
-.feedback-error {
-  color: #b42318;
-  background: #fff5f4;
-  border-color: #fecdca;
-}
-
-.feedback-success {
-  color: #067647;
-  background: #ecfdf3;
-  border-color: #abefc6;
-}
-
 @media (max-width: 600px) {
   .page-header h1 {
     font-size: 25px;

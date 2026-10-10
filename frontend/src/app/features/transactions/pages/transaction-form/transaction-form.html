@@ -17,20 +17,6 @@
         </div>
     </div>
 
-    @if (error) {
-    <div class="feedback feedback-error" role="alert">
-        <strong>Não foi possível concluir</strong>
-        <p>{{ error }}</p>
-    </div>
-    }
-
-    @if (success) {
-    <div class="feedback feedback-success" role="status">
-        <strong>Transação registrada!</strong>
-        <p>{{ success }}</p>
-    </div>
-    }
-
     <form (ngSubmit)="submit()">
         <div class="form-field">
             <label for="accountId">Conta</label>

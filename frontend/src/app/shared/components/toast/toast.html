@@ -1,0 +1,31 @@
+<div class="toast-container" role="region" aria-label="Notificações">
+  @for (toast of toastService.toasts(); track toast.id) {
+    <article
+      class="toast"
+      [class.toast-success]="toast.type === 'success'"
+      [class.toast-error]="toast.type === 'error'"
+      [class.toast-warning]="toast.type === 'warning'"
+      [class.toast-info]="toast.type === 'info'"
+      [attr.role]="toast.type === 'error' ? 'alert' : 'status'"
+      aria-atomic="true"
+    >
+      <span class="toast-icon" aria-hidden="true">
+        {{ iconFor(toast.type) }}
+      </span>
+
+      <div class="toast-content">
+        <strong>{{ toast.title }}</strong>
+        <p>{{ toast.message }}</p>
+      </div>
+
+      <button
+        type="button"
+        class="toast-close"
+        aria-label="Fechar notificação"
+        (click)="dismiss(toast.id)"
+      >
+        ×
+      </button>
+    </article>
+  }
+</div>

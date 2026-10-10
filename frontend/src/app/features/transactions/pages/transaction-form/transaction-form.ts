@@ -5,6 +5,7 @@ import { AccountsService } from '../../../../core/services/accounts';
 import { Account } from '../../../../core/models/account.model';
 import { TransactionsService } from '../../../../core/services/transactions';
 import { RouterLink } from '@angular/router';
+import { ToastService } from '../../../../core/services/toast';
 
 @Component({
   selector: 'app-transaction-form',
@@ -16,6 +17,7 @@ import { RouterLink } from '@angular/router';
 export class TransactionForm implements OnInit {
   private readonly accountsService = inject(AccountsService);
   private readonly transactionsService = inject(TransactionsService);
+  private readonly toastService = inject(ToastService);
 
   accounts: Account[] = [];
   accountId = '';
@@ -24,8 +26,6 @@ export class TransactionForm implements OnInit {
 
   loadingAccounts = true;
   submitting = false;
-  error = '';
-  success = '';
 
   ngOnInit(): void {
     this.accountsService.getAll().subscribe({
@@ -35,23 +35,20 @@ export class TransactionForm implements OnInit {
         this.loadingAccounts = false;
       },
       error: () => {
-        this.error = 'Não foi possível carregar as contas.';
+        this.toastService.error('Não foi possível carregar as contas.');
         this.loadingAccounts = false;
       },
     });
   }
 
   submit(): void {
-    this.error = '';
-    this.success = '';
-
     if (!this.accountId) {
-      this.error = 'Selecione uma conta.';
+      this.toastService.warning('Selecione uma conta.');
       return;
     }
 
     if (this.amount === null || !Number.isFinite(this.amount) || this.amount <= 0) {
-      this.error = 'Informe um valor maior que zero.';
+      this.toastService.warning('Informe um valor maior que zero.');
       return;
     }
 
@@ -64,21 +61,19 @@ export class TransactionForm implements OnInit {
     };
 
     this.submitting = true;
-
     this.transactionsService.create(transaction).subscribe({
       next: () => {
-        this.success = 'Transação enviada com sucesso!';
+        this.toastService.success('Transação registrada com sucesso!');
         this.amount = null;
         this.submitting = false;
       },
       error: (err) => {
-        const message = err?.error?.message;
-
-        this.error =
-          typeof message === 'string'
-            ? message
-            : 'Não foi possível registrar a transação. Verifique os dados e tente novamente.';
-
+        const apiMessage = err?.error?.detail ?? err?.error?.message;
+        this.toastService.error(
+          typeof apiMessage === 'string' && apiMessage.trim()
+            ? apiMessage
+            : 'Não foi possível registrar a transação. Verifique os dados e tente novamente.',
+        );
         this.submitting = false;
       },
     });

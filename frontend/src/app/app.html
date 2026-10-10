@@ -1,5 +1,5 @@
-
 <div class="app-shell">
+  <app-toast />
   <header class="topbar">
     <a class="brand" routerLink="/contas">
       <span class="brand-icon">F</span>
@@ -7,8 +7,10 @@
     </a>
 
     <nav class="navigation">
-      <a routerLink="/contas" routerLinkActive="active"
-         [routerLinkActiveOptions]="{ exact: true }">
+      <a routerLink="/transacoes/nova" routerLinkActive="active">
+        Nova transação
+      </a>
+      <a routerLink="/contas" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
         Visão geral
       </a>
 
