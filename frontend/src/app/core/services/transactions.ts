@@ -3,18 +3,20 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface Transaction {
+  id: string;
   eventId: string;
   accountId: string;
   type: 'CREDIT' | 'DEBIT';
   amount: number;
   occurredAt: string;
+  balanceAfter: number;
 }
 
 export interface TransactionPage {
   items: Transaction[];
   page: number;
   pageSize: number;
-  totalCount: number;
+  totalItems: number;
   totalPages: number;
 }
 

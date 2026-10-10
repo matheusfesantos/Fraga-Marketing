@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { AccountsService } from '../../../../core/services/accounts';
 import { Account } from '../../../../core/models/account.model';
@@ -18,11 +18,12 @@ import {
 export class TransactionsStatement implements OnInit {
   private readonly accountsService = inject(AccountsService);
   private readonly transactionsService = inject(TransactionsService);
+  private readonly changeDetector = inject(ChangeDetectorRef);
 
   accounts: Account[] = [];
   selectedAccountId = '';
   statement: TransactionPage | null = null;
-  loading = false;
+  loading = true;
   error = '';
   page = 1;
   readonly pageSize = 10;
@@ -35,10 +36,15 @@ export class TransactionsStatement implements OnInit {
         if (accounts.length > 0) {
           this.selectedAccountId = accounts[0].id;
           this.loadStatement();
+        } else {
+          this.loading = false;
         }
+        this.changeDetector.markForCheck();
       },
       error: () => {
         this.error = 'Não foi possível carregar as contas.';
+        this.loading = false;
+        this.changeDetector.markForCheck();
       },
     });
   }
@@ -55,10 +61,12 @@ export class TransactionsStatement implements OnInit {
         next: (result) => {
           this.statement = result;
           this.loading = false;
+          this.changeDetector.markForCheck();
         },
         error: () => {
           this.error = 'Não foi possível carregar o extrato.';
           this.loading = false;
+          this.changeDetector.markForCheck();
         },
       });
   }

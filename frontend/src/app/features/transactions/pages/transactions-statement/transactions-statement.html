@@ -14,8 +14,14 @@
     <select
       id="account"
       [value]="selectedAccountId"
+      [disabled]="accounts.length === 0"
       (change)="onAccountChange($any($event.target).value)"
     >
+      @if (accounts.length === 0) {
+        <option value="">
+          {{ loading ? 'Carregando contas...' : 'Nenhuma conta disponível' }}
+        </option>
+      }
       @for (account of accounts; track account.id) {
         <option [value]="account.id">{{ account.name }}</option>
       }
@@ -33,6 +39,11 @@
       <p>{{ error }}</p>
       <button type="button" (click)="loadStatement()">Tentar novamente</button>
     </div>
+  } @else if (accounts.length === 0) {
+    <div class="state-card">
+      <h3>Nenhuma conta disponível</h3>
+      <p>Cadastre uma conta para consultar o extrato.</p>
+    </div>
   } @else {
     <section class="balance-card">
       <div>
@@ -47,7 +58,7 @@
         <div>
           <h2>Histórico de transações</h2>
           <p class="subtitle">
-            {{ statement?.totalCount ?? 0 }} lançamento(s) encontrado(s)
+            {{ statement?.totalItems ?? 0 }} lançamento(s) encontrado(s)
           </p>
         </div>
       </div>
