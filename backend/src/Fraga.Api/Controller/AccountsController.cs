@@ -1,6 +1,5 @@
 using Fraga.Application.Accounts;
 using Fraga.Application.Accounts.DTOs;
-using Fraga.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Fraga.Api.Controllers;
@@ -10,34 +9,35 @@ namespace Fraga.Api.Controllers;
  * às contas.
  */
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/accounts")]
 public class AccountsController(AccountService service) : ControllerBase
 {
-    /**
-     * Retorna todas as contas.
-     */
+    /// <summary>
+    /// Lista todas as contas com seus saldos atuais.
+    /// </summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<Account>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IReadOnlyList<AccountResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllAsync(
         CancellationToken cancellationToken = default)
     {
-        var accounts = await service.GetAllAsync(
-            cancellationToken);
+        var accounts = await service.GetAllAsync(cancellationToken);
+
         return Ok(accounts);
     }
 
-    /**
-     * Retorna uma conta pelo seu ID.
-     */
+    /// <summary>
+    /// Retorna uma conta pelo seu identificador.
+    /// </summary>
     [HttpGet("{accountId:guid}")]
-    [ProducesResponseType(typeof(Account), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AccountResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetByIdAsync(
         Guid accountId,
         CancellationToken cancellationToken = default)
     {
         var account = await service.GetByIdAsync(
-            accountId, 
+            accountId,
             cancellationToken);
 
         if (account is null)
@@ -46,15 +46,15 @@ public class AccountsController(AccountService service) : ControllerBase
         return Ok(account);
     }
 
-    /**
-     * Retorna o extrato de transações de uma conta.
-     */
+    /// <summary>
+    /// Retorna o extrato paginado de uma conta, da transação mais recente para a mais antiga.
+    /// </summary>
     [HttpGet("{accountId:guid}/transactions")]
-    [ProducesResponseType(typeof(
-        PagedResponse<TransactionStatementItemResponse>), 
+    [ProducesResponseType(
+        typeof(PagedResponse<TransactionStatementItemResponse>),
         StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetStatementAsync(
         Guid accountId,
         [FromQuery] int page = 1,
@@ -62,14 +62,11 @@ public class AccountsController(AccountService service) : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var statement = await service.GetStatementAsync(
-                accountId,
-                page,
-                pageSize,
-                cancellationToken);
+            accountId,
+            page,
+            pageSize,
+            cancellationToken);
 
-            if (statement is null)
-                return NotFound();
-
-            return Ok(statement);
+        return Ok(statement);
     }
 }
