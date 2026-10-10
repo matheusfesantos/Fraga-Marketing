@@ -1,6 +1,7 @@
 using Fraga.Application.Abstractions;
 using Fraga.Application.Transactions.DTOs;
 using Fraga.Domain.Entities;
+using Fraga.Domain.Enums;
 using Fraga.Domain.Exceptions;
 
 namespace Fraga.Application.Transactions;
@@ -11,6 +12,8 @@ namespace Fraga.Application.Transactions;
  */
 public class TransactionService : ITransactionService
 {
+    private const int AmountDecimalPlaces = 2;
+
     private readonly ITransactionRepository _repository;
     private readonly ILogService _logService;
 
@@ -32,19 +35,20 @@ public class TransactionService : ITransactionService
      * - registro da transação;
      * - execução atômica da operação.
      */
-    public async Task ProcessAsync(ProcessTransactionRequest request)
+    public async Task<ProcessTransactionResponse> ProcessAsync(
+        ProcessTransactionRequest request,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         ValidateRequest(request);
 
-        if (request.Amount <= 0)
-            throw new ArgumentException("O valor da transação deve ser maior que zero.");
+        ProcessTransactionResponse? response = null;
 
-        await _repository.ExecuteAtomicAsync(async cancellationToken =>
+        await _repository.ExecuteAtomicAsync(async token =>
         {
             var account = await _repository.GetAccountForUpdateAsync(
                 request.AccountId,
-                cancellationToken);
+                token);
 
             if (account is null)
             {
@@ -59,7 +63,7 @@ public class TransactionService : ITransactionService
 
             var transactionAlreadyExists = await _repository.ExistsByEventIdAsync(
                 request.EventId,
-                cancellationToken);
+                token);
 
             if (transactionAlreadyExists)
             {
@@ -70,7 +74,7 @@ public class TransactionService : ITransactionService
                 throw new DuplicateEventException();
             }
 
-            if (request.Type == Domain.Enums.TransactionType.Credit)
+            if (request.Type == TransactionType.Credit)
             {
                 account.Credit(request.Amount);
             }
@@ -87,17 +91,23 @@ public class TransactionService : ITransactionService
                 request.OccurredAt,
                 account.Balance);
 
-            await _repository.AddTransactionAsync(
-                transaction,
-                cancellationToken);
-            await _repository.SaveChangesAsync(cancellationToken);
-        });
+            await _repository.AddTransactionAsync(transaction, token);
+            await _repository.SaveChangesAsync(token);
+
+            response = new ProcessTransactionResponse(
+                transaction.Id,
+                transaction.EventId,
+                transaction.AccountId,
+                account.Balance);
+        }, cancellationToken);
 
         _logService.Information(
             "Transação processada. EventId: {EventId}, AccountId: {AccountId}, Type: {TransactionType}",
             request.EventId,
             request.AccountId,
             request.Type);
+
+        return response!;
     }
 
     private static void ValidateRequest(ProcessTransactionRequest request)
@@ -117,5 +127,11 @@ public class TransactionService : ITransactionService
         if (request.Amount <= 0)
             throw new ArgumentException(
                 "O valor da transação deve ser maior que zero.");
+
+        // A coluna é numeric(18,2): mais casas seriam arredondadas em silêncio
+        // e o histórico deixaria de refletir o que foi enviado.
+        if (decimal.Round(request.Amount, AmountDecimalPlaces) != request.Amount)
+            throw new ArgumentException(
+                "O valor da transação deve ter no máximo duas casas decimais.");
     }
 }

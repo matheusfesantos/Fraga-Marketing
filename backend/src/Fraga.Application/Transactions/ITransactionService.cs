@@ -9,8 +9,10 @@ namespace Fraga.Application.Transactions;
 public interface ITransactionService
 {
     /**
-     * Processa um evento financeiro e atualiza
-     * o saldo e o histórico da conta.
+     * Processa um evento financeiro, atualiza o saldo e o histórico
+     * da conta e devolve o saldo resultante.
      */
-    Task ProcessAsync(ProcessTransactionRequest request);
+    Task<ProcessTransactionResponse> ProcessAsync(
+        ProcessTransactionRequest request,
+        CancellationToken cancellationToken = default);
 }
