@@ -1,7 +1,7 @@
-using System.Transactions;
 using Fraga.Domain.Exceptions;
 
 namespace Fraga.Domain.Entities;
+
 /**
  * Representa uma conta bancária dentro do domínio da aplicação.
  *
@@ -27,6 +27,11 @@ public class Account
         Balance = 0;
     }
 
+    /**
+     * Realiza o crédito de um valor na conta.
+     *
+     * @throws ArgumentOutOfRangeException Se o valor não for maior que zero.
+     */
     public void Credit(decimal amount)
     {
         EnsurePositive(amount);
@@ -43,11 +48,14 @@ public class Account
      *
      * @param amount O valor a ser debitado.
      *
+     * @throws ArgumentOutOfRangeException Se o valor não for maior que zero.
      * @throws InsufficientBalanceException Se o saldo da conta for insuficiente
      * para realizar o débito.
      */
     public void Debit(decimal amount)
     {
+        EnsurePositive(amount);
+
         if (!CanDebit(amount))
             throw new InsufficientBalanceException();
 

@@ -37,7 +37,7 @@ public class Transaction
      * @param accountId Identificador da conta.
      * @param type Tipo da transação (crédito ou débito).
      * @param amount Valor da transação.
-     * @param occurredAt Data e hora em que a transação ocorreu.
+     * @param occurredAt Data e hora em que a transação ocorreu (normalizada para UTC).
      * @param balanceAfter Saldo da conta após a transação.
      */
     public Transaction(
@@ -53,7 +53,7 @@ public class Transaction
         AccountId = accountId;
         Type = type;
         Amount = amount;
-        OccurredAt = occurredAt;
+        OccurredAt = occurredAt.ToUniversalTime();
         BalanceAfter = balanceAfter;
     }
 }
