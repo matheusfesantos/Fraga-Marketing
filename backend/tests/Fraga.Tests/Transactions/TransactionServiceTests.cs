@@ -67,7 +67,7 @@ public class TransactionServiceTests
     [Fact(DisplayName = "Deve rejeitar evento que já foi processado")]
     public async Task Deve_Rejeitar_Evento_Que_Ja_Foi_Processado()
     {
-        var conta = new Account(Guid.NewGuid());
+        var conta = new Account(Guid.NewGuid(), "Conta de teste");
 
         var requisicao = new ProcessTransactionRequest(
                 Guid.NewGuid(),
@@ -124,7 +124,7 @@ public class TransactionServiceTests
     [Fact(DisplayName = "Deve bloquear a conta antes de verificar a duplicidade do evento")]
     public async Task Deve_Bloquear_Conta_Antes_De_Verificar_Duplicidade()
     {
-        var conta = new Account(Guid.NewGuid());
+        var conta = new Account(Guid.NewGuid(), "Conta de teste");
         var ordemChamadas = new List<string>();
 
         var requisicao = new ProcessTransactionRequest(
@@ -197,7 +197,7 @@ public class TransactionServiceTests
     [Fact(DisplayName = "Deve aumentar o saldo e registrar a transação ao processar um crédito válido")]
     public async Task Deve_Aumentar_Saldo_E_Registrar_Transacao_Ao_Processar_Credito_Valido()
     {
-        var conta = new Account(Guid.NewGuid());
+        var conta = new Account(Guid.NewGuid(), "Conta de teste");
 
         var requisicao = new ProcessTransactionRequest(
             Guid.NewGuid(),
@@ -245,7 +245,7 @@ public class TransactionServiceTests
     [Fact(DisplayName = "Deve rejeitar débito quando o saldo for insuficiente")]
     public async Task Deve_Rejeitar_Debito_Quando_Saldo_For_Insuficiente()
     {
-        var conta = new Account(Guid.NewGuid());
+        var conta = new Account(Guid.NewGuid(), "Conta de teste");
         conta.Credit(50m);
 
         var requisicao = new ProcessTransactionRequest(

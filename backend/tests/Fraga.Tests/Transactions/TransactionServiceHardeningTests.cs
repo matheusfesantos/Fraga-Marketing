@@ -59,7 +59,7 @@ public sealed class TransactionServiceHardeningTests
     [Fact(DisplayName = "Deve reduzir o saldo e registrar a transação ao processar um débito válido")]
     public async Task Deve_Reduzir_Saldo_E_Registrar_Transacao_Ao_Processar_Debito_Valido()
     {
-        var conta = new Account(Guid.NewGuid());
+        var conta = new Account(Guid.NewGuid(), "Conta de teste");
         conta.Credit(100m);
 
         var requisicao = new ProcessTransactionRequest(
@@ -96,7 +96,7 @@ public sealed class TransactionServiceHardeningTests
     [Fact(DisplayName = "Deve normalizar a data da transação para UTC")]
     public async Task Deve_Normalizar_Data_Da_Transacao_Para_Utc()
     {
-        var conta = new Account(Guid.NewGuid());
+        var conta = new Account(Guid.NewGuid(), "Conta de teste");
 
         var ocorridoEmBrasilia = new DateTimeOffset(
             2026, 1, 30, 10, 15, 0, TimeSpan.FromHours(-3));
@@ -129,7 +129,7 @@ public sealed class TransactionServiceHardeningTests
     [Fact(DisplayName = "Deve devolver o saldo atualizado na resposta")]
     public async Task Deve_Devolver_Saldo_Atualizado_Na_Resposta()
     {
-        var conta = new Account(Guid.NewGuid());
+        var conta = new Account(Guid.NewGuid(), "Conta de teste");
         conta.Credit(20m);
 
         var requisicao = new ProcessTransactionRequest(

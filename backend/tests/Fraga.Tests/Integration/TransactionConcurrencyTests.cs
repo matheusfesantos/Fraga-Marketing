@@ -182,7 +182,7 @@ public sealed class TransactionConcurrencyTests : IClassFixture<PostgresFixture>
 
         await using (var context = _fixture.CriarContexto())
         {
-            context.Accounts.Add(new Account(contaId));
+            context.Accounts.Add(new Account(contaId, "Conta de teste"));
             await context.SaveChangesAsync();
         }
 
