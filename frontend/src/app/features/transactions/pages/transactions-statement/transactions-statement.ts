@@ -2,13 +2,9 @@ import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { AccountsService } from '../../../../core/services/accounts';
 import { Account } from '../../../../core/models/account.model';
-import {
-  TransactionsService,
-  Transaction,
-  TransactionPage,
-} from '../../../../core/services/transactions';
+import { AccountsService } from '../../../../core/services/Account/accounts';
+import { Transaction, TransactionPage, TransactionsService } from '../../../../core/services/Transaction/transactions';
 
 @Component({
   selector: 'app-transactions-statement',

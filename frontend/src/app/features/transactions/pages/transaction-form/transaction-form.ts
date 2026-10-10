@@ -1,11 +1,11 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AccountsService } from '../../../../core/services/accounts';
 import { Account } from '../../../../core/models/account.model';
-import { TransactionsService } from '../../../../core/services/transactions';
 import { RouterLink } from '@angular/router';
-import { ToastService } from '../../../../core/services/toast';
+import { AccountsService } from '../../../../core/services/Account/accounts';
+import { TransactionsService } from '../../../../core/services/Transaction/transactions';
+import { ToastService } from '../../../../core/services/Toast/toast';
 
 @Component({
   selector: 'app-transaction-form',

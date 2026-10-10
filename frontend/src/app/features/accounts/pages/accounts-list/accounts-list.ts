@@ -1,13 +1,9 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { AccountsService } from '../../../../core/services/accounts';
 import { Account } from '../../../../core/models/account.model';
-import {
-  Transaction,
-  TransactionPage,
-  TransactionsService,
-} from '../../../../core/services/transactions';
+import { AccountsService } from '../../../../core/services/Account/accounts';
+import { Transaction, TransactionPage, TransactionsService } from '../../../../core/services/Transaction/transactions';
 
 @Component({
   selector: 'app-accounts-list',
