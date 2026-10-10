@@ -1,66 +1,178 @@
 <section class="page">
-  <div class="page-heading">
+  <header class="page-heading">
     <div>
-      <p class="eyebrow">PAINEL FINANCEIRO</p>
+      <p class="eyebrow"><span aria-hidden="true">✧</span> MOTOR DE SALDOS</p>
       <h1>Visão geral</h1>
-      <p class="subtitle">Acompanhe suas contas e seus saldos em um só lugar.</p>
+      <p class="subtitle">Acompanhe suas contas e movimentações em um só lugar.</p>
     </div>
-  </div>
-
-  <section class="summary-card">
-    <div class="summary-icon">R$</div>
-    <div>
-      <p class="summary-label">Saldo total consolidado</p>
-      <h2>{{ totalBalance | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</h2>
-      <p class="summary-description">Saldo somado de todas as contas</p>
-    </div>
-  </section>
-
-  <div class="section-heading">
-    <div>
-      <h2>Minhas contas</h2>
-      <p class="subtitle">Confira o saldo individual de cada conta.</p>
-    </div>
-    <span class="account-count">{{ accounts.length }} conta(s)</span>
-  </div>
+  </header>
 
   @if (loading) {
-  <div class="state-card">
-    <div class="spinner"></div>
-    <p>Carregando suas contas...</p>
-  </div>
+    <div class="state-card">
+      <div class="spinner"></div>
+      <p>Carregando suas contas...</p>
+    </div>
   } @else if (error) {
-  <div class="state-card error-state">
-    <h3>Não foi possível carregar os dados</h3>
-    <p>{{ error }}</p>
-  </div>
-  } @else if (accounts.length === 0) {
-  <div class="state-card">
-    <h3>Nenhuma conta encontrada</h3>
-    <p>Quando houver contas cadastradas, elas aparecerão aqui.</p>
-  </div>
+    <div class="state-card error-state">
+      <h3>Não foi possível carregar os dados</h3>
+      <p>{{ error }}</p>
+    </div>
   } @else {
-  <div class="accounts-grid">
-    @for (account of accounts; track account.id) {
-    <article class="account-card">
-      <div class="account-card-top">
-        <div class="account-icon">
-          <span>R$</span>
+    <section class="overview-grid" aria-label="Resumo financeiro">
+      <article class="metric-card">
+        <p class="metric-label">Saldo consolidado</p>
+        <p class="metric-value">
+          {{ totalBalance | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+        </p>
+        <p class="metric-note">Saldo somado de todas as contas</p>
+      </article>
+
+      <article class="metric-card">
+        <p class="metric-label">Contas cadastradas</p>
+        <p class="metric-value">{{ accounts.length }}</p>
+        <p class="metric-note">Disponíveis para movimentação</p>
+      </article>
+
+      <article class="metric-card">
+        <p class="metric-label">Lançamentos recentes</p>
+        <p class="metric-value">{{ recentStatement?.totalItems ?? '—' }}</p>
+        <p class="metric-note">
+          {{ selectedAccount?.name ?? 'Selecione uma conta' }}
+        </p>
+      </article>
+    </section>
+
+    <section class="accounts-section">
+      <div class="section-heading">
+        <div>
+          <h2>Suas contas</h2>
+          <p class="subtitle">Selecione uma conta para ver o extrato.</p>
         </div>
-        <span class="status-dot"></span>
+        <span class="account-count">{{ accounts.length }} conta(s)</span>
       </div>
 
-      <p class="account-label">Conta</p>
-      <h3>{{ account.name }}</h3>
+      @if (accounts.length === 0) {
+        <div class="state-card">
+          <h3>Nenhuma conta encontrada</h3>
+          <p>Quando houver contas cadastradas, elas aparecerão aqui.</p>
+        </div>
+      } @else {
+        <div class="accounts-grid">
+          @for (account of accounts; track account.id) {
+            <button
+              type="button"
+              class="account-card"
+              [class.selected]="selectedAccountId === account.id"
+              [attr.aria-pressed]="selectedAccountId === account.id"
+              (click)="selectAccount(account.id)"
+            >
+              <span class="account-card-top">
+                <span class="account-icon" aria-hidden="true">▥</span>
+                <span
+                  class="account-status"
+                  [class.no-balance]="account.balance <= 0"
+                >
+                  {{ account.balance > 0 ? 'Ativa' : 'Sem saldo' }}
+                </span>
+                <span class="account-more" aria-hidden="true">•••</span>
+              </span>
 
-      <div class="account-divider"></div>
+              <span class="account-name">{{ account.name }}</span>
+              <span class="account-id">
+                <span aria-hidden="true">▢</span>
+                {{ account.id.slice(0, 8) }}…{{ account.id.slice(-4) }}
+              </span>
 
-      <p class="balance-label">Saldo disponível</p>
-      <p class="account-balance">
-        {{ account.balance | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
-      </p>
-    </article>
+              <span class="account-balance-row">
+                <span>Saldo disponível</span>
+                <strong>{{ account.balance | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+              </span>
+
+              <span class="account-card-footer">
+                {{ selectedAccountId === account.id ? (recentStatement?.totalItems ?? 0) : 'Ver' }}
+                {{ selectedAccountId === account.id ? 'lançamento(s)' : 'extrato' }}
+                <span aria-hidden="true">›</span>
+              </span>
+            </button>
+          }
+        </div>
+      }
+    </section>
+
+    @if (accounts.length > 0 && selectedAccount) {
+      <section class="recent-card">
+        <header class="recent-heading">
+          <div>
+            <div class="recent-title-row">
+              <h2>Extrato recente</h2>
+              <span class="selected-account">{{ selectedAccount.name }}</span>
+            </div>
+            <p class="subtitle">Últimas movimentações desta conta</p>
+          </div>
+
+          <a
+            routerLink="/transacoes"
+            [queryParams]="{ accountId: selectedAccount.id }"
+            class="text-link"
+          >
+            Ver extrato completo
+            <span aria-hidden="true">›</span>
+          </a>
+        </header>
+
+        @if (loadingRecent) {
+          <div class="recent-state">
+            <div class="spinner"></div>
+            <p>Carregando movimentações...</p>
+          </div>
+        } @else if (recentError) {
+          <div class="recent-state error-state">
+            <p>{{ recentError }}</p>
+          </div>
+        } @else if (recentTransactions.length === 0) {
+          <div class="recent-state">
+            <p>Esta conta ainda não possui movimentações.</p>
+          </div>
+        } @else {
+          <div class="recent-list">
+            @for (transaction of recentTransactions; track transaction.id) {
+              <article class="recent-transaction">
+                <span
+                  class="transaction-icon"
+                  [class.debit]="transaction.type === 'DEBIT'"
+                  aria-hidden="true"
+                >
+                  {{ transaction.type === 'CREDIT' ? '↗' : '↙' }}
+                </span>
+
+                <div class="transaction-description">
+                  <strong>
+                    {{ transaction.type === 'CREDIT' ? 'Crédito recebido' : 'Débito realizado' }}
+                  </strong>
+                  <span>
+                    {{ transaction.occurredAt | date:'dd MMM, HH:mm':'':'pt-BR' }}
+                    <span aria-hidden="true"> · </span>
+                    <span class="transaction-id">{{ transaction.eventId }}</span>
+                  </span>
+                </div>
+
+                <strong
+                  class="transaction-amount"
+                  [class.debit]="transaction.type === 'DEBIT'"
+                >
+                  {{ transaction.type === 'CREDIT' ? '+' : '−' }}
+                  {{ transaction.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                </strong>
+
+                <div class="transaction-balance">
+                  <span>Saldo após</span>
+                  <strong>{{ transaction.balanceAfter | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
     }
-  </div>
   }
 </section>
