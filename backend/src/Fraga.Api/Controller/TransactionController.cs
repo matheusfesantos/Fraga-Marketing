@@ -10,7 +10,7 @@ public class TransactionController : ControllerBase
 {
     private readonly ITransactionService _transactionService;
 
-    public TransactionController(TransactionService transactionService)
+    public TransactionController(ITransactionService transactionService)
     {
         _transactionService = transactionService;
     }
