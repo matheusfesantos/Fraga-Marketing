@@ -12,7 +12,7 @@
 
 .eyebrow {
   margin: 0 0 8px;
-  color: #2463eb;
+  color: #005a9c;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1.4px;
@@ -68,7 +68,7 @@ h1 {
 }
 
 .filter-card select:focus {
-  border-color: #2463eb;
+  border-color: #005a9c;
   box-shadow: 0 0 0 3px rgb(36 99 235 / 12%);
 }
 
@@ -80,7 +80,7 @@ h1 {
   padding: 26px;
   margin-bottom: 28px;
   color: #fff;
-  background: linear-gradient(120deg, #245be8, #397cf5);
+  background: linear-gradient(120deg, #003b71, #005a9c);
   border-radius: 16px;
   box-shadow: 0 12px 28px rgb(36 99 235 / 14%);
 }
@@ -228,7 +228,7 @@ tbody tr:hover {
 .pagination button,
 .state-card button {
   padding: 10px 15px;
-  color: #2463eb;
+  color: #003b71;
   font: inherit;
   font-size: 13px;
   font-weight: 650;
@@ -241,7 +241,7 @@ tbody tr:hover {
 
 .pagination button:hover:not(:disabled),
 .state-card button:hover {
-  background: #edf3ff;
+  background: #eaf1f7;
 }
 
 .pagination button:disabled {
@@ -268,9 +268,9 @@ tbody tr:hover {
   height: 48px;
   margin-bottom: 14px;
   place-items: center;
-  color: #2463eb;
+  color: #003b71;
   font-size: 26px;
-  background: #edf3ff;
+  background: #eaf1f7;
   border-radius: 14px;
 }
 
@@ -302,7 +302,7 @@ tbody tr:hover {
   height: 30px;
   margin-bottom: 16px;
   border: 3px solid #e5ecff;
-  border-top-color: #2463eb;
+  border-top-color: #005a9c;
   border-radius: 50%;
   animation: spin 800ms linear infinite;
 }
@@ -368,4 +368,34 @@ tbody tr:hover {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+.filter-card,
+.statement-card,
+.state-card {
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgb(24 39 75 / 3%);
+}
+
+.balance-card {
+  color: #172b4d;
+  background: #fff;
+  border: 1px solid #e3e9f1;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgb(24 39 75 / 3%);
+}
+
+.balance-label {
+  color: #778197;
+}
+
+.balance-card h2 {
+  color: #172b4d;
+}
+
+.balance-icon {
+  color: #005a9c;
+  background: #eaf1f7;
+  border: 1px solid #d8e5ef;
+  border-radius: 11px;
 }

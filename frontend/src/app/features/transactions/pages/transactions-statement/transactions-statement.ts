@@ -1,5 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { AccountsService } from '../../../../core/services/accounts';
 import { Account } from '../../../../core/models/account.model';
 import {
@@ -11,13 +13,14 @@ import {
 @Component({
   selector: 'app-transactions-statement',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DatePipe],
+  imports: [CommonModule, CurrencyPipe, DatePipe, FormsModule],
   templateUrl: './transactions-statement.html',
   styleUrl: './transactions-statement.scss',
 })
 export class TransactionsStatement implements OnInit {
   private readonly accountsService = inject(AccountsService);
   private readonly transactionsService = inject(TransactionsService);
+  private readonly route = inject(ActivatedRoute);
   private readonly changeDetector = inject(ChangeDetectorRef);
 
   accounts: Account[] = [];
@@ -34,7 +37,10 @@ export class TransactionsStatement implements OnInit {
         this.accounts = accounts;
 
         if (accounts.length > 0) {
-          this.selectedAccountId = accounts[0].id;
+          const requestedAccountId = this.route.snapshot.queryParamMap.get('accountId');
+          this.selectedAccountId =
+            accounts.find((account) => account.id === requestedAccountId)?.id ??
+            accounts[0].id;
           this.loadStatement();
         } else {
           this.loading = false;

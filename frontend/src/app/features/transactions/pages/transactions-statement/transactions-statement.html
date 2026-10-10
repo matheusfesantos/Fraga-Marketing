@@ -13,9 +13,10 @@
     <label for="account">Conta selecionada</label>
     <select
       id="account"
-      [value]="selectedAccountId"
+      [ngModel]="selectedAccountId"
+      (ngModelChange)="onAccountChange($event)"
+      name="account"
       [disabled]="accounts.length === 0"
-      (change)="onAccountChange($any($event.target).value)"
     >
       @if (accounts.length === 0) {
         <option value="">

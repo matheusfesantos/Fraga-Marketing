@@ -6,17 +6,15 @@
       <span>Fraga <strong>Bank</strong></span>
     </a>
 
-    <nav class="navigation">
+    <nav class="navigation" aria-label="Navegação principal">
+      <a routerLink="/contas" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        Visão geral
+      </a>
+      <a routerLink="/transacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        Extrato
+      </a>
       <a routerLink="/transacoes/nova" routerLinkActive="active">
         Nova transação
-      </a>
-      
-      <a routerLink="/contas" routerLinkActive="active">
-        Contas
-      </a>
-
-      <a routerLink="/transacoes" routerLinkActive="active">
-        Transações
       </a>
     </nav>
 
