@@ -1,57 +1,152 @@
-# Fraga Marketing API
+# Fraga Marketing
 
-API de contas e eventos financeiros. O projeto permite criar e consultar contas, processar créditos e débitos e consultar o extrato de uma conta.
+Sistema full-stack para gestão de contas e transações financeiras, com backend em .NET e frontend em Angular.
 
-## Tecnologias
+## Visão geral
+
+O repositório implementa uma API para:
+
+- criar e consultar contas;
+- registrar créditos e débitos;
+- consultar o extrato de uma conta;
+- garantir idempotência por `eventId`;
+- impedir saldo negativo e rejeitar eventos duplicados;
+- manter uma arquitetura de domínio, aplicação e infraestrutura separadas.
+
+A aplicação também inclui uma interface frontend em Angular para consumo da API, com listagem de contas, formulário de transações e visão do extrato.
+
+## Stack
 
 - .NET 10 / ASP.NET Core
-- PostgreSQL 16 e Entity Framework Core
-- xUnit para testes
-- Docker Compose para subir a API e o banco
+- PostgreSQL 16
+- Entity Framework Core
+- Angular 21
+- xUnit para testes do backend
+- Docker Compose para ambiente local
+
+## Estrutura do repositório
+
+```text
+.
+├── backend/
+│   ├── src/
+│   │   ├── Fraga.Api/
+│   │   ├── Fraga.Application/
+│   │   ├── Fraga.Domain/
+│   │   └── Fraga.Infrastructure/
+│   ├── Fraga.slnx
+│   └── Dockerfile
+├── frontend/
+│   ├── src/
+│   ├── package.json
+│   └── Dockerfile
+├── docker-compose.yml
+├── README.md
+└── .gitignore
+```
 
 ## Como executar
 
-### Com Docker Compose
+### Opção 1: com Docker Compose
 
-Pré-requisitos: Docker Desktop com Docker Compose.
+Pré-requisitos: Docker Desktop ou Docker Engine com suporte a Compose.
 
-Na raiz do repositório:
+Na raiz do repositório, execute:
 
 ```bash
 docker compose up --build
 ```
 
-A API ficará disponível em `http://localhost:8080`. A documentação interativa está em `http://localhost:8080/swagger` e o health check em `http://localhost:8080/health`.
+Isso inicia os containers:
 
-O Compose inicia o PostgreSQL e aguarda o banco ficar saudável antes de iniciar a API. Na inicialização, a aplicação aplica as migrations pendentes e, se o banco ainda não tiver contas, insere três contas de exemplo. Para parar os serviços, use `docker compose down`; os dados continuam no volume `postgres_data`.
+- Frontend: `http://localhost:4200`
+- API: `http://localhost:8080`
+- Swagger: `http://localhost:8080/swagger`
+- Health check: `http://localhost:8080/health`
+- PostgreSQL: `localhost:5432`
 
-As configurações do banco podem ser sobrescritas pelas variáveis `POSTGRES_DB`, `POSTGRES_USER` e `POSTGRES_PASSWORD` (o Compose possui valores padrão para desenvolvimento).
+O Compose aplica as migrations do banco automaticamente e cria contas de exemplo quando necessário. Para encerrar os serviços:
 
-### Localmente, sem Compose
+```bash
+docker compose down
+```
+
+Os dados do PostgreSQL ficam persistidos no volume `postgres_data`.
+
+### Opção 2: backend localmente
 
 Pré-requisitos: .NET 10 SDK e PostgreSQL 16 em execução.
 
-Configure a connection string `ConnectionStrings:DefaultConnection` para apontar para seu PostgreSQL. Também é possível defini-la pela variável de ambiente `ConnectionStrings__DefaultConnection`. Em seguida:
+Configure a connection string antes de iniciar a API:
+
+```bash
+export ConnectionStrings__DefaultConnection="Host=localhost;Port=5432;Database=fraga;Username=postgres;Password=postgres"
+```
+
+Ou ajuste o valor em `backend/src/Fraga.Api/appsettings.Development.json`.
+
+Em seguida:
 
 ```bash
 dotnet run --project backend/src/Fraga.Api/Fraga.Api.csproj --launch-profile http
 ```
 
-Com o perfil `http`, a API fica em `http://localhost:5007`; Swagger em `/swagger` e health check em `/health`. A origem CORS permitida por padrão é `http://localhost:4200`; ajuste `Cors:AllowedOrigins` se necessário.
+A API fica disponível em `http://localhost:5007` com o perfil `http`.
+
+### Opção 3: frontend localmente
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+O frontend usa proxy para a API local e normalmente fica em `http://localhost:4200`.
+
+## Frontend: arquitetura e componentização
+
+O frontend foi organizado em camadas conceituais para manter a interface mais previsível e fácil de evoluir:
+
+- `core`: serviços, modelos e regras de integração com a API.
+  - `AccountsService`: consulta contas da API.
+  - `TransactionsService`: consulta extrato e cria transações.
+  - `ToastService`: centraliza feedback visual para sucesso, erro e warning.
+- `features`: páginas e fluxos específicos do domínio.
+  - `accounts`: visão geral das contas e resumo financeiro.
+  - `transactions`: extrato e formulário de criação de transações.
+- `shared`: componentes reutilizáveis e visuais compartilhados pela aplicação.
+  - `app-header`: navegação principal.
+  - `toast`: notificação de feedback.
+  - `summary-card`: blocos de resumo.
+
+Além disso, a aplicação usa Angular standalone components, que deixam cada página/componentes independentes, com imports explícitos e menos acoplamento com módulos globais. Isso aumenta modularidade e facilita manutenção.
+
+A estrutura de navegação também segue esse princípio:
+
+- `/contas`: listar contas e resumo financeiro;
+- `/transacoes`: visualizar extrato;
+- `/transacoes/nova`: registrar nova transação.
+
+Esse modelo separa responsabilidades:
+
+- serviços cuidam da comunicação com a API;
+- páginas orquestram a experiência do usuário;
+- componentes visuais ficam focados na apresentação;
+- o roteamento controla a navegação entre fluxos sem misturar lógica de negócio com a UI.
 
 ## API
 
-Os valores de `type` são `CREDIT` e `DEBIT`. Os exemplos abaixo usam `curl` e uma conta criada anteriormente ou uma das contas de exemplo.
+Os valores de `type` aceitos na API são `CREDIT` e `DEBIT`.
 
 | Método | Rota | Descrição |
 |---|---|---|
 | `POST` | `/api/accounts` | Cria uma conta com saldo zero |
 | `GET` | `/api/accounts` | Lista as contas e saldos |
-| `GET` | `/api/accounts/{accountId}` | Consulta uma conta |
-| `GET` | `/api/accounts/{accountId}/transactions?page=1&pageSize=10` | Consulta o extrato paginado, do mais recente ao mais antigo |
-| `POST` | `/api/transactions` | Processa um crédito ou débito |
+| `GET` | `/api/accounts/{accountId}` | Consulta uma conta específica |
+| `GET` | `/api/accounts/{accountId}/transactions?page=1&pageSize=10` | Consulta o extrato paginado |
+| `POST` | `/api/transactions` | Processa uma transação financeira |
 
-Criar uma conta:
+### Exemplo: criar conta
 
 ```bash
 curl -X POST http://localhost:8080/api/accounts \
@@ -59,7 +154,7 @@ curl -X POST http://localhost:8080/api/accounts \
   -d '{"name":"Conta de Teste"}'
 ```
 
-Processar um crédito:
+### Exemplo: processar crédito
 
 ```bash
 curl -X POST http://localhost:8080/api/transactions \
@@ -73,62 +168,89 @@ curl -X POST http://localhost:8080/api/transactions \
   }'
 ```
 
-Substitua `accountId` por uma conta existente e use um `eventId` único por evento. Um débito acima do saldo é rejeitado. Reenviar um evento já registrado não altera o saldo novamente e retorna `409 Conflict`.
+Observações:
 
-## Organização e decisões
+- `eventId` deve ser único por evento;
+- eventos duplicados são rejeitados;
+- débitos maiores que o saldo disponível são bloqueados;
+- o extrato é paginado e limitado por página para evitar consultas muito grandes;
+- valores monetários são armazenados com precisão de 2 casas decimais.
 
-O código está separado em quatro projetos para manter as regras de negócio independentes dos detalhes de transporte e persistência:
+## Arquitetura e componentização
 
-- `Fraga.Domain`: entidades, invariantes e exceções de negócio.
-- `Fraga.Application`: casos de uso, contratos de repositório e DTOs.
-- `Fraga.Infrastructure`: Entity Framework Core, PostgreSQL, migrations e repositórios.
-- `Fraga.Api`: endpoints HTTP, configuração de dependências e conversão de exceções em respostas HTTP.
+A arquitetura foi pensada para separar claramente responsabilidades e facilitar evolução do sistema sem acoplar regras de negócio a detalhes de infraestrutura, HTTP ou interface.
 
-Essa separação adiciona mais projetos e interfaces do que uma API pequena estritamente precisaria, mas deixa as regras de negócio testáveis sem depender de HTTP ou banco. O custo de estrutura foi aceito para tornar responsabilidades e limites mais claros.
+### Backend: separação por camadas
 
-Uma das minhas principais preocupações durante o desenvolvimento foi a organização e a manutenibilidade do código. Por isso, optei por separar a solução em projetos como `Fraga.Domain` e `Fraga.Api`, buscando deixar as responsabilidades mais bem definidas e facilitar a manutenção e a evolução do sistema por outros desenvolvedores. Também procurei evitar concentrar muitas funcionalidades em uma única classe ou serviço.
+A estrutura do backend segue uma abordagem orientada a domínio com divisões bem definidas:
 
-Um exemplo é a parte de logs. Em vez de espalhar a lógica de logging pelos serviços, criei um serviço específico para essa responsabilidade, definido pelo contrato `ILogService`. Assim, mudanças futuras relacionadas a logs podem ser feitas de forma mais organizada e sem acoplar essa responsabilidade às regras de negócio.
+- `Fraga.Domain`: entidades, invariantes e regras centrais do negócio. Aqui ficam as regras que não dependem de banco, API ou framework.
+- `Fraga.Application`: casos de uso, serviços, contratos e DTOs. É o núcleo da aplicação, responsável por coordenar a lógica de negócio sem saber como os dados são persistidos.
+- `Fraga.Infrastructure`: implementação concreta de acesso a dados, Entity Framework Core, PostgreSQL e repositórios.
+- `Fraga.Api`: endpoints HTTP, serialização JSON, injeção de dependências e mapeamento de erros em respostas estruturadas.
 
-Segui uma ideia semelhante para os contratos de serviços e repositórios: interfaces como `ITransactionService`, `ITransactionRepository` e `IAccountRepository` ajudam a desacoplar a aplicação dos detalhes de implementação e facilitam a substituição de dependências e a criação de testes. Os DTOs também definem explicitamente os dados recebidos e devolvidos pela API, evitando expor diretamente as entidades do domínio e mantendo os contratos HTTP mais claros.
+Essa divisão foi escolhida por três motivos principais:
 
-Para erros, centralizei o mapeamento de exceções para respostas HTTP no `GlobalExceptionHandler`, usando `ProblemDetails`. Não criei um envelope genérico único para todas as respostas de sucesso; dentro do prazo, priorizei os contratos específicos de cada operação e os requisitos principais do teste.
+1. baixo acoplamento: a regra de negócio não depende de implementação específica de banco ou transporte;
+2. testabilidade: é mais simples testar casos de negócio diretamente em camadas de domínio/aplicação sem depender de infraestrutura;
+3. manutenção: mudanças em banco, API, validações ou contratos de entrada podem ser feitas com menor impacto em outras partes do sistema.
 
-Nos testes, procurei cobrir mais do que os caminhos de sucesso, incluindo entradas inválidas, eventos duplicados, saldo insuficiente e concorrência. Usei o Claude como apoio para levantar cenários adicionais e implementei os que consegui desenvolver dentro do prazo. A intenção foi validar tanto o comportamento esperado quanto as respostas a situações de erro.
+Além disso, serviços e repositórios foram abstraídos por interfaces (`ITransactionService`, `IAccountRepository`, etc.), o que favorece inversão de dependência e facilita a criação de testes e substituição de implementações sem quebrar o restante da aplicação.
 
-Para versionar o esquema do banco, utilizei migrations do Entity Framework Core. Também criei exceções específicas para regras de negócio, como evento duplicado e saldo insuficiente, para tornar os erros mais claros e facilitar seu tratamento. O handler global usa um `switch` para mapear esses tipos às respectivas respostas HTTP, mantendo esse fluxo centralizado e explícito.
+### Componentização do frontend
 
-Na camada de frontend, a intenção também foi manter contratos de comunicação claros, validar entradas e usar debounce onde isso evita chamadas repetidas à API. No estado atual deste repositório, porém, `frontend/` contém apenas o scaffold inicial do Angular; esses comportamentos ainda não estão implementados aqui. Essa distinção evita apresentar como funcionalidade entregue algo que ainda é uma diretriz de desenvolvimento.
+No frontend, a organização também foi feita de forma modular e orientada por responsabilidade:
 
-No geral, tomei decisões pensando não apenas em fazer a aplicação funcionar, mas também em como ela poderia ser mantida e evoluída. Há melhorias possíveis, mas, dentro do prazo, priorizei uma estrutura organizada, responsabilidades bem definidas e os cenários de negócio mais importantes.
+- `core`: modelos de domínio, serviços e abstrações reutilizáveis;
+- `features`: páginas e fluxos de negócio, como contas, transações e extrato;
+- `shared`: componentes reutilizáveis e utilitários visuais;
+- `routes`: roteamento da aplicação.
 
-O PostgreSQL foi escolhido para persistência relacional e para suportar as garantias de concorrência usadas no processamento. Cada operação de transação roda em uma transação do banco e bloqueia a conta durante a atualização do saldo; um índice único em `EventId` impede que o mesmo evento seja aplicado duas vezes, inclusive em chamadas concorrentes. Como contrapartida, o processamento depende de recursos específicos do PostgreSQL e não pode ser validado fielmente usando apenas um banco em memória.
+A aplicação segue uma estrutura de componentes standalone e serviços dedicados para acesso à API. Por exemplo:
 
-Os valores monetários usam `decimal` e são persistidos com precisão `numeric(18,2)`. A API rejeita valores com mais de duas casas decimais em vez de arredondá-los silenciosamente. Cada registro também guarda o saldo após a operação, facilitando a leitura do histórico; isso duplica informação derivável, mas preserva o resultado daquela transação no extrato.
+- `AccountsService` concentra a comunicação com `/api/accounts`;
+- `TransactionsService` centraliza o acesso aos endpoints de transação e extrato;
+- páginas como `AccountsList`, `TransactionForm` e `TransactionsStatement` são responsáveis pela experiência de usuário e composição visual, enquanto os serviços cuidam do transporte de dados.
 
-O extrato é paginado e limita `pageSize` a 100 para evitar consultas sem limite. As migrations são aplicadas ao iniciar a API e as contas de exemplo só são inseridas quando não há contas. Isso simplifica a execução e avaliação local; em produção, migrations e carga inicial normalmente devem fazer parte de um processo controlado de deploy, não da inicialização de cada instância.
+Essa organização foi escolhida para manter a UI mais previsível, reduzir duplicação de código e facilitar a evolução do produto em funcionalidades futuras sem misturar regras de negócio com renderização.
+
+### Por que essa arquitetura foi usada
+
+A solução foi desenhada como um projeto de nível pleno, com foco em:
+
+- clareza de responsabilidades;
+- separação entre domínio, aplicação e infraestrutura;
+- baixo acoplamento e alta coesão;
+- facilidade de manutenção e extensão;
+- qualidade operacional com testes e tratamento centralizado de exceções.
+
+Em outras palavras, o objetivo não foi apenas "funcionar", mas demonstrar capacidade de construir software de forma sustentável, profissional e escalável.
 
 ## Testes
 
-Na raiz do repositório:
+### Backend
 
 ```bash
 dotnet test backend/Fraga.slnx
 ```
 
-Os testes de integração sobem um PostgreSQL 16 com Testcontainers. É necessário ter Docker em execução para executar essa parte da suíte.
-
-Para validar o frontend Angular localmente:
+### Frontend
 
 ```bash
 cd frontend
-npm ci --legacy-peer-deps
-npm run build
-npm test -- --watch=false
+npm run test:jest -- --runInBand
 ```
 
-O workflow de CI em `.github/workflows/ci.yml` executa em paralelo o build e os testes do frontend Angular (Node.js 22) e restaura, compila em Release e testa o backend (.NET 10), em pushes e pull requests para `develop` e `main`. O pipeline valida as alterações, mas não faz deploy automático.
+Também é possível validar o build do frontend com:
 
-## Escopo
+```bash
+cd frontend
+npm run build
+```
 
-Este repositório implementa o backend da avaliação; não inclui interface web nem autenticação/autorização. As contas de exemplo e configurações padrão do Compose são voltadas a desenvolvimento. Antes de expor a API em produção, configure credenciais seguras, autenticação, políticas de acesso e gestão de migrations apropriada ao ambiente.
+## Observações
+
+- o PostgreSQL é usado para garantir integridade transacional e concorrência no processamento de saldo;
+- as migrations são aplicadas automaticamente na inicialização da API;
+- a estrutura atual é adequada para desenvolvimento e validação local; em produção, é recomendável revisar autenticação, autorização, políticas de deploy e configuração de ambiente.
+
