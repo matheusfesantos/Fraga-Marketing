@@ -1,0 +1,283 @@
+:host {
+  display: block;
+}
+
+.page {
+  padding: 12px 0 40px;
+}
+
+.page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #2463eb;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+}
+
+h1 {
+  margin: 0;
+  color: #17233c;
+  font-size: clamp(28px, 4vw, 36px);
+  font-weight: 750;
+  letter-spacing: -1px;
+}
+
+.subtitle {
+  margin: 8px 0 0;
+  color: #778197;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 28px;
+  margin-bottom: 36px;
+  color: #fff;
+  background: linear-gradient(120deg, #245be8, #397cf5);
+  border-radius: 18px;
+  box-shadow: 0 12px 28px rgb(36 99 235 / 16%);
+}
+
+.summary-icon {
+  display: grid;
+  flex-shrink: 0;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  background: rgb(255 255 255 / 16%);
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 16px;
+}
+
+.summary-label {
+  margin: 0 0 8px;
+  color: rgb(255 255 255 / 85%);
+  font-size: 14px;
+}
+
+.summary-card h2 {
+  margin: 0;
+  font-size: clamp(25px, 4vw, 34px);
+  font-weight: 750;
+  letter-spacing: -0.8px;
+  overflow-wrap: anywhere;
+}
+
+.summary-description {
+  margin: 8px 0 0;
+  color: rgb(255 255 255 / 75%);
+  font-size: 12px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  color: #17233c;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.account-count {
+  padding: 8px 12px;
+  color: #2463eb;
+  font-size: 12px;
+  font-weight: 700;
+  background: #eaf0ff;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 20px;
+}
+
+.account-card {
+  min-width: 0;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e9edf5;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgb(24 39 75 / 4%);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.account-card:hover {
+  transform: translateY(-3px);
+  border-color: #d7e2ff;
+  box-shadow: 0 10px 24px rgb(24 39 75 / 8%);
+}
+
+.account-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.account-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  color: #2463eb;
+  font-size: 15px;
+  font-weight: 800;
+  background: #edf3ff;
+  border-radius: 14px;
+}
+
+.status-dot {
+  width: 9px;
+  height: 9px;
+  background: #22b573;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px #e8f8f0;
+}
+
+.account-label,
+.balance-label {
+  margin: 0 0 7px;
+  color: #8a94a8;
+  font-size: 12px;
+}
+
+.account-card h3 {
+  margin: 0;
+  color: #17233c;
+  font-size: 18px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.account-divider {
+  height: 1px;
+  margin: 22px 0;
+  background: #edf0f6;
+}
+
+.account-balance {
+  margin: 0;
+  color: #17233c;
+  font-size: 23px;
+  font-weight: 750;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
+}
+
+.state-card {
+  display: flex;
+  min-height: 180px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #e9edf5;
+  border-radius: 16px;
+}
+
+.state-card h3 {
+  margin: 0 0 8px;
+  color: #17233c;
+}
+
+.state-card p {
+  margin: 0;
+  color: #778197;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.error-state {
+  border-color: #f4cccc;
+  background: #fffafa;
+}
+
+.error-state h3 {
+  color: #b42318;
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  margin-bottom: 16px;
+  border: 3px solid #e5ecff;
+  border-top-color: #2463eb;
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding-top: 4px;
+  }
+
+  .page-heading {
+    margin-bottom: 20px;
+  }
+
+  .summary-card {
+    align-items: flex-start;
+    gap: 14px;
+    padding: 22px 18px;
+    margin-bottom: 28px;
+    border-radius: 14px;
+  }
+
+  .summary-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 16px;
+    border-radius: 12px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+  }
+
+  .account-card {
+    padding: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,120 @@
+
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: #f5f7fb;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 76px;
+  padding: 0 6%;
+  background: #fff;
+  border-bottom: 1px solid #e8edf4;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #172b4d;
+  font-size: 21px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+
+  strong {
+    color: #2463eb;
+  }
+}
+
+.brand-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 11px;
+  background: #2463eb;
+  color: white;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  a {
+    padding: 10px 14px;
+    border-radius: 8px;
+    color: #65738b;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+
+    &:hover,
+    &.active {
+      background: #edf3ff;
+      color: #2463eb;
+    }
+  }
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #65738b;
+  font-size: 13px;
+}
+
+.profile-avatar {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e8efff;
+  color: #2463eb;
+  font-weight: 700;
+}
+
+.main-content {
+  width: min(1400px, 100%);
+  margin: 0 auto;
+  padding: 32px 6%;
+}
+
+@media (max-width: 760px) {
+  .topbar {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px 5%;
+  }
+
+  .navigation {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+
+    a {
+      white-space: nowrap;
+    }
+  }
+
+  .profile-label {
+    display: none;
+  }
+
+  .main-content {
+    padding: 24px 5%;
+  }
+}
