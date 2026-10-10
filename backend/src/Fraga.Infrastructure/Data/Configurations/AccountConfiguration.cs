@@ -11,14 +11,18 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.ToTable("accounts", table =>
         {
             table.HasCheckConstraint(
-            "CK_accounts_balance_non_negative",
-            "\"Balance\" >= 0");
+                "CK_accounts_balance_non_negative",
+                "\"Balance\" >= 0");
         });
 
         builder.HasKey(account => account.Id);
 
         builder.Property(account => account.Id)
             .ValueGeneratedNever();
+
+        builder.Property(account => account.Name)
+            .HasMaxLength(Account.NameMaxLength)
+            .IsRequired();
 
         builder.Property(account => account.Balance)
             .HasPrecision(18, 2)

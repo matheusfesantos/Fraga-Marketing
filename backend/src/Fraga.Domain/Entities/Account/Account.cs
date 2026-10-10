@@ -5,12 +5,16 @@ namespace Fraga.Domain.Entities;
 /**
  * Representa uma conta bancária dentro do domínio da aplicação.
  *
- * A conta mantém seu saldo atual e o relacionamento
+ * A conta possui um nome, mantém seu saldo atual e o relacionamento
  * com seu histórico de transações.
  */
 public class Account
 {
+    public const int NameMaxLength = 100;
+
     public Guid Id { get; private set; }
+
+    public string Name { get; private set; } = string.Empty;
 
     public decimal Balance { get; private set; }
 
@@ -21,9 +25,22 @@ public class Account
     {
     }
 
-    public Account(Guid id)
+    /**
+     * Cria uma nova conta com saldo zero.
+     *
+     * @param id Identificador da conta.
+     * @param name Nome da conta (obrigatório, até 100 caracteres).
+     *
+     * @throws ArgumentException Se o id for vazio ou o nome for inválido.
+     */
+    public Account(Guid id, string name)
     {
+        if (id == Guid.Empty)
+            throw new ArgumentException(
+                "O identificador da conta não pode ser vazio.");
+
         Id = id;
+        Name = NormalizeName(name);
         Balance = 0;
     }
 
@@ -60,6 +77,21 @@ public class Account
             throw new InsufficientBalanceException();
 
         Balance -= amount;
+    }
+
+    private static string NormalizeName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException(
+                "O nome da conta não pode ser vazio.");
+
+        var normalized = name.Trim();
+
+        if (normalized.Length > NameMaxLength)
+            throw new ArgumentException(
+                $"O nome da conta deve ter no máximo {NameMaxLength} caracteres.");
+
+        return normalized;
     }
 
     private static void EnsurePositive(decimal amount)

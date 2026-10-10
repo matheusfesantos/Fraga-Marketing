@@ -10,11 +10,11 @@ namespace Fraga.Infrastructure.Data;
  */
 public static class DbInitializer
 {
-    private static readonly Guid[] SeedAccountIds =
+    private static readonly (Guid Id, string Name)[] SeedAccounts =
     [
-        Guid.Parse("11111111-1111-1111-1111-111111111111"),
-        Guid.Parse("22222222-2222-2222-2222-222222222222"),
-        Guid.Parse("33333333-3333-3333-3333-333333333333")
+        (Guid.Parse("11111111-1111-1111-1111-111111111111"), "Conta Corrente"),
+        (Guid.Parse("22222222-2222-2222-2222-222222222222"), "Conta Poupança"),
+        (Guid.Parse("33333333-3333-3333-3333-333333333333"), "Conta Investimentos")
     ];
 
     public static async Task InitializeAsync(
@@ -26,7 +26,7 @@ public static class DbInitializer
         if (await context.Accounts.AnyAsync(cancellationToken))
             return;
 
-        var accounts = SeedAccountIds.Select(id => new Account(id));
+        var accounts = SeedAccounts.Select(seed => new Account(seed.Id, seed.Name));
 
         await context.Accounts.AddRangeAsync(accounts, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
