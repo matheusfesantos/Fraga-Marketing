@@ -1,12 +1,15 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Fraga.Api.Services;
 using Fraga.Application.Abstractions;
 using Fraga.Application.Accounts;
 using Fraga.Application.Transactions;
+using Fraga.Domain.Enums;
 using Fraga.Infrastructure.Data;
 using Fraga.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 
 
 const string CorsPolicyName = "FrontendPolicy";
@@ -28,7 +31,25 @@ builder.Services
                 allowIntegerValues: false));
     });
 
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddSchemaTransformer((schema, context, _) =>
+    {
+        if (context.JsonTypeInfo.Type == typeof(TransactionType))
+        {
+            schema.Type = JsonSchemaType.String;
+            schema.Enum = Enum.GetNames<TransactionType>()
+                .Select(name => (JsonNode)JsonValue.Create(
+                    JsonNamingPolicy.SnakeCaseUpper.ConvertName(name))!)
+                .ToList();
+            schema.Default = JsonValue.Create(
+                JsonNamingPolicy.SnakeCaseUpper.ConvertName(
+                    nameof(TransactionType.Credit)));
+        }
+
+        return Task.CompletedTask;
+    });
+});
 
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
