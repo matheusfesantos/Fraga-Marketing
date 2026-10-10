@@ -1,1 +1,132 @@
-<p>transactions-statement works!</p>
+<section class="page">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">MOVIMENTAÇÕES FINANCEIRAS</p>
+      <h1>Extrato da conta</h1>
+      <p class="subtitle">
+        Consulte os lançamentos e acompanhe as movimentações da sua conta.
+      </p>
+    </div>
+  </div>
+
+  <section class="filter-card">
+    <label for="account">Conta selecionada</label>
+    <select
+      id="account"
+      [value]="selectedAccountId"
+      (change)="onAccountChange($any($event.target).value)"
+    >
+      @for (account of accounts; track account.id) {
+        <option [value]="account.id">{{ account.name }}</option>
+      }
+    </select>
+  </section>
+
+  @if (loading) {
+    <div class="state-card">
+      <div class="spinner"></div>
+      <p>Carregando extrato...</p>
+    </div>
+  } @else if (error) {
+    <div class="state-card error-state">
+      <h3>Não foi possível carregar o extrato</h3>
+      <p>{{ error }}</p>
+      <button type="button" (click)="loadStatement()">Tentar novamente</button>
+    </div>
+  } @else {
+    <section class="balance-card">
+      <div>
+        <p class="balance-label">Saldo atual da conta</p>
+        <h2>{{ runningBalance | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</h2>
+      </div>
+      <div class="balance-icon">R$</div>
+    </section>
+
+    <section class="statement-card">
+      <div class="statement-heading">
+        <div>
+          <h2>Histórico de transações</h2>
+          <p class="subtitle">
+            {{ statement?.totalCount ?? 0 }} lançamento(s) encontrado(s)
+          </p>
+        </div>
+      </div>
+
+      @if (transactions.length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">↔</div>
+          <h3>Nenhuma movimentação encontrada</h3>
+          <p>Esta conta ainda não possui transações registradas.</p>
+        </div>
+      } @else {
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Identificador</th>
+                <th>Tipo</th>
+                <th class="numeric">Valor</th>
+                <th class="numeric">Impacto no saldo</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (transaction of transactions; track transaction.eventId) {
+                <tr>
+                  <td>
+                    {{ transaction.occurredAt | date:'dd/MM/yyyy HH:mm':'':'pt-BR' }}
+                  </td>
+                  <td class="transaction-id">
+                    {{ transaction.eventId }}
+                  </td>
+                  <td>
+                    <span
+                      class="type-badge"
+                      [class.credit]="transaction.type === 'CREDIT'"
+                      [class.debit]="transaction.type === 'DEBIT'"
+                    >
+                      {{ transaction.type === 'CREDIT' ? 'Crédito' : 'Débito' }}
+                    </span>
+                  </td>
+                  <td class="numeric">
+                    {{ transaction.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                  </td>
+                  <td
+                    class="numeric impact"
+                    [class.positive]="transaction.type === 'CREDIT'"
+                    [class.negative]="transaction.type === 'DEBIT'"
+                  >
+                    {{ transaction.type === 'CREDIT' ? '+' : '−' }}
+                    {{ transaction.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination">
+          <span>
+            Página {{ statement?.page ?? page }} de {{ statement?.totalPages ?? 0 }}
+          </span>
+          <div class="pagination-actions">
+            <button
+              type="button"
+              [disabled]="page <= 1 || loading"
+              (click)="changePage(page - 1)"
+            >
+              Anterior
+            </button>
+            <button
+              type="button"
+              [disabled]="!statement || page >= statement.totalPages || loading"
+              (click)="changePage(page + 1)"
+            >
+              Próxima
+            </button>
+          </div>
+        </div>
+      }
+    </section>
+  }
+</section>
