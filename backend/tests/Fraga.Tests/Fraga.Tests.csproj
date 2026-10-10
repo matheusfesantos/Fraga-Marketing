@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Fraga.Application\Fraga.Application.csproj" />
     <ProjectReference Include="..\..\src\Fraga.Domain\Fraga.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Fraga.Api\Fraga.Api.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,3 +1,4 @@
+using Fraga.Domain.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,24 +21,39 @@ public sealed class GlobalExceptionHandler(
      * @returns Um valor booleano indicando se a exceção foi manipulada com sucesso.
      */
     public async ValueTask<bool> TryHandleAsync(
-        HttpContext httpContext, 
+        HttpContext httpContext,
         Exception exception,
         CancellationToken cancellationToken = default)
     {
-        var(statusCode, message) = exception switch
+        var (statusCode, title) = exception switch
         {
-            ArgumentException => (
-                StatusCodes.Status400BadRequest, "o parâmetro fornecido é inválido."),
-            
+            DuplicateEventException => (
+                StatusCodes.Status409Conflict,
+                "Evento duplicado."),
+
+            InsufficientBalanceException => (
+                StatusCodes.Status422UnprocessableEntity,
+                "Saldo insuficiente."),
+
             KeyNotFoundException => (
-                StatusCodes.Status404NotFound, "O recurso solicitado não foi encontrado."),
-            _ => (StatusCodes.Status500InternalServerError, "Erro interno do servidor.")
+                StatusCodes.Status404NotFound,
+                "O recurso solicitado não foi encontrado."),
+
+            ArgumentException => (
+                StatusCodes.Status400BadRequest,
+                "O parâmetro fornecido é inválido."),
+
+            _ => (
+                StatusCodes.Status500InternalServerError,
+                "Erro interno do servidor.")
         };
 
-        if (statusCode == 500)
+        var isServerError = statusCode == StatusCodes.Status500InternalServerError;
+
+        if (isServerError)
         {
             logger.LogError(
-                exception, 
+                exception,
                 "Erro não tratado ocorreu ao processar a solicitação.");
         }
 
@@ -46,20 +62,18 @@ public sealed class GlobalExceptionHandler(
         var problemDetails = new ProblemDetails
         {
             Status = statusCode,
-            Title = message,
+            Title = title,
             Type = "https://httpstatuses.com/" + statusCode,
-            Instance = httpContext.Request.Path
+            Instance = httpContext.Request.Path,
+            // Mensagens de negócio e validação são seguras de expor;
+            // no 500 nada da exceção vaza para o cliente.
+            Detail = isServerError ? null : exception.Message
         };
-
-        if(500 < statusCode)
-        {
-            problemDetails.Detail = exception.Message;
-        }
 
         problemDetails.Extensions["traceId"] = httpContext.TraceIdentifier;
 
         await httpContext.Response.WriteAsJsonAsync(
-            problemDetails, 
+            problemDetails,
             cancellationToken: cancellationToken);
 
         return true;
