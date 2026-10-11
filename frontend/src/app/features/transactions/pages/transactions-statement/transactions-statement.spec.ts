@@ -243,7 +243,9 @@ describe('TransactionsStatement', () => {
 
     fixture.detectChanges();
 
-    expect(component.error).toBe('Não foi possível carregar as contas.');
+    expect(component.error).toBe(
+      'Não foi possível carregar os dados. Verifique a conexão e tente novamente.',
+    );
     expect(component.loading).toBe(false);
   });
 
@@ -256,7 +258,9 @@ describe('TransactionsStatement', () => {
 
     component.loadStatement();
 
-    expect(component.error).toBe('Não foi possível carregar o extrato.');
+    expect(component.error).toBe(
+      'Não foi possível carregar os dados. Verifique a conexão e tente novamente.',
+    );
     expect(component.loading).toBe(false);
   });
 

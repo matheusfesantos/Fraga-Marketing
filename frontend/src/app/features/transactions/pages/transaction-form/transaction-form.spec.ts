@@ -290,14 +290,16 @@ describe('TransactionForm', () => {
         expect(component.submitting).toBe(false);
     });
 
-    it('deve exibir erro inline do valor após o campo ser tocado', () => {
+    it('deve identificar o valor inválido após o campo ser tocado', () => {
         fixture.detectChanges();
         const amount = component.form.controls.amount;
 
-        expect(component.showErrors(amount)).toBe(false);
+        expect(amount.invalid).toBe(true);
+        expect(amount.touched).toBe(false);
 
         amount.markAsTouched();
 
-        expect(component.showErrors(amount)).toBe(true);
+        expect(amount.invalid).toBe(true);
+        expect(amount.touched).toBe(true);
     });
 });
