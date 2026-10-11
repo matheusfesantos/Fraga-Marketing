@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { Account } from '../../../../core/models/account.model';
 import { AccountsService } from '../../../../core/services/Account/accounts';
 import { Transaction, TransactionPage, TransactionsService } from '../../../../core/services/Transaction/transactions';
@@ -13,7 +14,7 @@ const DEFAULT_RECENT_TRANSACTIONS_ERROR_MESSAGE =
 @Component({
   selector: 'app-accounts-list',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, RouterLink],
+  imports: [CommonModule, CurrencyPipe, MatIconModule, RouterLink],
   templateUrl: './accounts-list.html',
   styleUrl: './accounts-list.scss',
 })
@@ -79,6 +80,20 @@ export class AccountsList implements OnInit {
 
   get selectedAccount(): Account | undefined {
     return this.accounts.find((account) => account.id === this.selectedAccountId);
+  }
+
+  getAccountIcon(accountName: string): string {
+    const normalizedName = accountName.toLocaleLowerCase('pt-BR');
+
+    if (normalizedName.includes('poupança')) {
+      return 'savings';
+    }
+
+    if (normalizedName.includes('invest')) {
+      return 'trending_up';
+    }
+
+    return 'account_balance';
   }
 
   get recentTransactions(): Transaction[] {

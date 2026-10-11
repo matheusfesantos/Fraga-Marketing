@@ -67,7 +67,9 @@
               (click)="selectAccount(account.id)"
             >
               <span class="account-card-top">
-                <span class="account-icon" aria-hidden="true">▥</span>
+                <mat-icon class="account-icon" aria-hidden="true">
+                  {{ getAccountIcon(account.name) }}
+                </mat-icon>
                 <span
                   class="account-status"
                   [class.no-balance]="account.balance <= 0"

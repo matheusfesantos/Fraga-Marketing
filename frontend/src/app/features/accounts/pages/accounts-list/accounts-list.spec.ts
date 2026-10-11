@@ -126,6 +126,13 @@ describe('AccountsList', () => {
     expect(component.recentTransactions).toEqual(mockStatement.items);
   });
 
+  it('deve escolher um ícone Material para cada tipo de conta', () => {
+    expect(component.getAccountIcon('Conta Corrente')).toBe('account_balance');
+    expect(component.getAccountIcon('Conta Poupança')).toBe('savings');
+    expect(component.getAccountIcon('Conta Investimentos')).toBe('trending_up');
+    expect(component.getAccountIcon('Outra conta')).toBe('account_balance');
+  });
+
   it('deve permitir selecionar outra conta', () => {
     fixture.detectChanges();
 
