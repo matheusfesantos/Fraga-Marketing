@@ -5,6 +5,11 @@ import { Account } from '../../../../core/models/account.model';
 import { AccountsService } from '../../../../core/services/Account/accounts';
 import { Transaction, TransactionPage, TransactionsService } from '../../../../core/services/Transaction/transactions';
 
+const DEFAULT_ACCOUNTS_ERROR_MESSAGE =
+  'Não foi possível carregar as contas. Verifique se a API está funcionando.';
+const DEFAULT_RECENT_TRANSACTIONS_ERROR_MESSAGE =
+  'Não foi possível carregar as movimentações recentes.';
+
 @Component({
   selector: 'app-accounts-list',
   standalone: true,
@@ -38,8 +43,7 @@ export class AccountsList implements OnInit {
         this.changeDetector.markForCheck();
       },
       error: () => {
-        this.error =
-          'Não foi possível carregar as contas. Verifique se a API está funcionando.';
+        this.error = DEFAULT_ACCOUNTS_ERROR_MESSAGE;
         this.loading = false;
         this.changeDetector.markForCheck();
       },
@@ -59,7 +63,7 @@ export class AccountsList implements OnInit {
       },
       error: () => {
         this.recentStatement = null;
-        this.recentError = 'Não foi possível carregar as movimentações recentes.';
+        this.recentError = DEFAULT_RECENT_TRANSACTIONS_ERROR_MESSAGE;
         this.loadingRecent = false;
         this.changeDetector.markForCheck();
       },

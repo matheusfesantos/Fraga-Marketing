@@ -6,6 +6,11 @@ import { Account } from '../../../../core/models/account.model';
 import { AccountsService } from '../../../../core/services/Account/accounts';
 import { Transaction, TransactionPage, TransactionsService } from '../../../../core/services/Transaction/transactions';
 
+const DEFAULT_ACCOUNTS_ERROR_MESSAGE =
+  'Não foi possível carregar as contas.';
+const DEFAULT_STATEMENT_ERROR_MESSAGE =
+  'Não foi possível carregar o extrato.';
+
 @Component({
   selector: 'app-transactions-statement',
   standalone: true,
@@ -44,7 +49,7 @@ export class TransactionsStatement implements OnInit {
         this.changeDetector.markForCheck();
       },
       error: () => {
-        this.error = 'Não foi possível carregar as contas.';
+        this.error = DEFAULT_ACCOUNTS_ERROR_MESSAGE;
         this.loading = false;
         this.changeDetector.markForCheck();
       },
@@ -66,7 +71,7 @@ export class TransactionsStatement implements OnInit {
           this.changeDetector.markForCheck();
         },
         error: () => {
-          this.error = 'Não foi possível carregar o extrato.';
+          this.error = DEFAULT_STATEMENT_ERROR_MESSAGE;
           this.loading = false;
           this.changeDetector.markForCheck();
         },
