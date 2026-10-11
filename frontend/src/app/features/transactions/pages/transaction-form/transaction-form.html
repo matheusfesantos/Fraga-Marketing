@@ -19,28 +19,28 @@
 
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
         <div class="form-field">
-            <label for="accountId">Conta</label>
-            <select id="accountId" formControlName="accountId"
-                [class.invalid]="showErrors(form.controls.accountId)">
-                <option value="" disabled>Selecione uma conta</option>
-                @for (account of accounts; track account.id) {
-                <option [value]="account.id">
-                    {{ account.name }} — {{ account.balance | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
-                </option>
-                }
-            </select>
+            <mat-form-field appearance="outline">
+                <mat-label>Conta</mat-label>
+                <mat-select formControlName="accountId">
+                    @for (account of accounts; track account.id) {
+                    <mat-option [value]="account.id">
+                        {{ account.name }} — {{ account.balance | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                    </mat-option>
+                    }
+                </mat-select>
 
-            @if (loadingAccounts) {
-            <small>Carregando contas...</small>
-            } @else if (accounts.length === 0) {
-            <small class="field-error">Nenhuma conta disponível para movimentação.</small>
-            } @else if (showErrors(form.controls.accountId)) {
-            <small class="field-error">Selecione uma conta.</small>
-            }
+                @if (loadingAccounts) {
+                <mat-hint>Carregando contas...</mat-hint>
+                } @else if (accounts.length === 0) {
+                <mat-hint>Nenhuma conta disponível para movimentação.</mat-hint>
+                }
+
+                <mat-error>Selecione uma conta.</mat-error>
+            </mat-form-field>
         </div>
 
         <div class="form-field">
-            <label>Tipo de transação</label>
+            <label class="field-label">Tipo de transação</label>
 
             <div class="type-options">
                 <label class="type-option" [class.selected-credit]="form.controls.type.value === 'CREDIT'">
@@ -64,35 +64,31 @@
         </div>
 
         <div class="form-field">
-            <label for="amount">Valor da transação</label>
-
-            <div class="amount-input" [class.invalid]="showErrors(form.controls.amount)">
-                <span>R$</span>
-                <input id="amount" type="number" formControlName="amount" min="0.01" step="0.01"
+            <mat-form-field appearance="outline">
+                <mat-label>Valor da transação</mat-label>
+                <span matTextPrefix>R$&nbsp;</span>
+                <input matInput type="number" formControlName="amount" min="0.01" step="0.01"
                     placeholder="0,00" />
-            </div>
+                <mat-hint>Informe um valor maior que zero, com até duas casas decimais.</mat-hint>
 
-            @if (showErrors(form.controls.amount)) {
-            <small class="field-error">
-                @if (form.controls.amount.hasError('required')) {
-                Informe o valor da transação.
-                } @else if (form.controls.amount.hasError('min')) {
-                Informe um valor maior que zero.
-                } @else if (form.controls.amount.hasError('maxDecimals')) {
-                Use no máximo duas casas decimais.
-                } @else {
-                Informe um valor numérico válido.
-                }
-            </small>
-            } @else {
-            <small>Informe um valor maior que zero, com até duas casas decimais.</small>
-            }
+                <mat-error>
+                    @if (form.controls.amount.hasError('required')) {
+                    Informe o valor da transação.
+                    } @else if (form.controls.amount.hasError('min')) {
+                    Informe um valor maior que zero.
+                    } @else if (form.controls.amount.hasError('maxDecimals')) {
+                    Use no máximo duas casas decimais.
+                    } @else {
+                    Informe um valor numérico válido.
+                    }
+                </mat-error>
+            </mat-form-field>
         </div>
 
         <div class="form-actions">
-            <a routerLink="/contas" class="button-secondary">Cancelar</a>
+            <a mat-stroked-button routerLink="/contas">Cancelar</a>
 
-            <button type="submit" class="button-primary" [disabled]="form.disabled">
+            <button mat-flat-button type="submit" [disabled]="form.disabled">
                 @if (submitting) {
                 Registrando...
                 } @else {

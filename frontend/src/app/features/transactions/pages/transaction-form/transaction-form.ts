@@ -8,6 +8,10 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
@@ -44,7 +48,15 @@ export function amountFormat(control: AbstractControl): ValidationErrors | null 
 @Component({
   selector: 'app-transaction-form',
   standalone: true,
-  imports: [ReactiveFormsModule, CurrencyPipe, RouterLink],
+  imports: [
+    ReactiveFormsModule,
+    CurrencyPipe,
+    RouterLink,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+  ],
   templateUrl: './transaction-form.html',
   styleUrl: './transaction-form.scss',
 })
@@ -83,10 +95,6 @@ export class TransactionForm implements OnInit {
   ngOnInit(): void {
     this.updateFormAvailability();
     this.loadAccounts();
-  }
-
-  showErrors(control: AbstractControl): boolean {
-    return control.invalid && control.touched;
   }
 
   submit(): void {
