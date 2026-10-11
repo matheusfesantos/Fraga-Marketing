@@ -1,0 +1,139 @@
+:host {
+  display: contents;
+}
+
+.toast-container {
+  position: fixed;
+  top: 84px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(380px, calc(100vw - 32px));
+  max-height: calc(100vh - 112px);
+  overflow-y: auto;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e4e7ec;
+  border-left: 4px solid #98a2b3;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgb(16 24 40 / 12%);
+  pointer-events: auto;
+  animation: toast-enter 0.25s ease-out;
+
+  &.toast-success {
+    border-left-color: #12b76a;
+
+    .toast-icon {
+      color: #027a48;
+      background: #d1fadf;
+    }
+  }
+
+  &.toast-error {
+    border-left-color: #f04438;
+
+    .toast-icon {
+      color: #b42318;
+      background: #fee4e2;
+    }
+  }
+
+  &.toast-warning {
+    border-left-color: #f79009;
+
+    .toast-icon {
+      color: #b54708;
+      background: #fef0c7;
+    }
+  }
+
+  &.toast-info {
+    border-left-color: #2463eb;
+
+    .toast-icon {
+      color: #1849a9;
+      background: #dbeafe;
+    }
+  }
+}
+
+.toast-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.toast-content {
+  flex: 1;
+  min-width: 0;
+
+  strong {
+    display: block;
+    margin: 2px 0 4px;
+    color: #101828;
+    font-size: 14px;
+  }
+
+  p {
+    margin: 0;
+    color: #475467;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+}
+
+.toast-close {
+  padding: 0 2px;
+  color: #667085;
+  background: transparent;
+  border: 0;
+  font-size: 23px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    color: #101828;
+  }
+}
+
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .toast-container {
+    top: 72px;
+    right: 16px;
+    width: calc(100vw - 32px);
+    max-height: calc(100vh - 96px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}

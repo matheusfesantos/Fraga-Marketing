@@ -1,0 +1,30 @@
+<div class="app-shell">
+  <app-toast />
+  <header class="topbar">
+    <a class="brand" routerLink="/contas">
+      <span class="brand-icon">F</span>
+      <span>Fraga <strong>Bank</strong></span>
+    </a>
+
+    <nav class="navigation" aria-label="Navegação principal">
+      <a routerLink="/contas" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        Visão geral
+      </a>
+      <a routerLink="/transacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        Extrato
+      </a>
+      <a routerLink="/transacoes/nova" routerLinkActive="active">
+        Nova transação
+      </a>
+    </nav>
+
+    <div class="profile">
+      <span class="profile-avatar">FB</span>
+      <span class="profile-label">Painel financeiro</span>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <router-outlet />
+  </main>
+</div>

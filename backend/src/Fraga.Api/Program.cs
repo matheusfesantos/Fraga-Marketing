@@ -1,0 +1,117 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
+using Fraga.Api.Middleware;
+using Fraga.Api.Services;
+using Fraga.Application.Abstractions;
+using Fraga.Application.Accounts;
+using Fraga.Application.Transactions;
+using Fraga.Domain.Enums;
+using Fraga.Infrastructure.Data;
+using Fraga.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
+using StackExchange.Redis;
+
+
+const string CorsPolicyName = "FrontendPolicy";
+
+var builder = WebApplication.CreateBuilder(args);
+
+var redisConnection =
+    builder.Configuration.GetConnectionString("Redis")
+    ?? "localhost:6379";
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(
+    _ => ConnectionMultiplexer.Connect(redisConnection));
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Contrato: "CREDIT" | "DEBIT" na entrada e na saída.
+        options.JsonSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter(
+                JsonNamingPolicy.SnakeCaseUpper,
+                allowIntegerValues: false));
+    });
+
+builder.Services.AddOpenApi(options =>
+{
+    options.AddSchemaTransformer((schema, context, _) =>
+    {
+        if (context.JsonTypeInfo.Type == typeof(TransactionType))
+        {
+            schema.Type = JsonSchemaType.String;
+            schema.Enum = Enum.GetNames<TransactionType>()
+                .Select(name => (JsonNode)JsonValue.Create(
+                    JsonNamingPolicy.SnakeCaseUpper.ConvertName(name))!)
+                .ToList();
+            schema.Default = JsonValue.Create(
+                JsonNamingPolicy.SnakeCaseUpper.ConvertName(
+                    nameof(TransactionType.Credit)));
+        }
+
+        return Task.CompletedTask;
+    });
+});
+
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? [];
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(CorsPolicyName, policy =>
+        policy
+            .WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
+builder.Services
+    .AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>("postgres");
+
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+builder.Services.AddScoped<AccountService>();
+builder.Services.AddSingleton<ILogService, LogService>();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
+var app = builder.Build();
+
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await DbInitializer.InitializeAsync(context);
+}
+
+app.UseExceptionHandler();
+
+app.MapOpenApi();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/openapi/v1.json", "Fraga API v1");
+});
+
+// Em container só há HTTP; o redirecionamento fica restrito ao desenvolvimento local.
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
+app.UseCors(CorsPolicyName);
+
+app.MapControllers();
+app.MapHealthChecks("/health");
+
+app.UseMiddleware<RedisRateLimitMiddleware>();
+
+app.Run();
