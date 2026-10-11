@@ -1,166 +1,189 @@
-# Fraga Marketing
+# Fraga Bank: motor de saldos de contas
 
-Sistema full-stack para gestão de contas e transações financeiras, com backend em .NET e frontend em Angular.
+Solução full-stack para gerenciar contas bancárias e processar eventos financeiros (crédito e débito) com **idempotência**, **consistência** e **transacionalidade**, com API em .NET e interface em Angular.
 
-## Visão geral
+## Sumário
 
-O repositório implementa uma API para:
-
-- criar e consultar contas;
-- registrar créditos e débitos;
-- consultar o extrato de uma conta;
-- garantir idempotência por `eventId`;
-- impedir saldo negativo e rejeitar eventos duplicados;
-- manter uma arquitetura de domínio, aplicação e infraestrutura separadas.
-
-A aplicação também inclui uma interface frontend em Angular para consumo da API, com listagem de contas, formulário de transações e visão do extrato.
-
-## Stack
-
-- .NET 10 / ASP.NET Core
-- PostgreSQL 16
-- Entity Framework Core
-- Angular 21
-- xUnit para testes do backend
-- Docker Compose para ambiente local
-
-## Estrutura do repositório
-
-```text
-.
-├── backend/
-│   ├── src/
-│   │   ├── Fraga.Api/
-│   │   ├── Fraga.Application/
-│   │   ├── Fraga.Domain/
-│   │   └── Fraga.Infrastructure/
-│   ├── Fraga.slnx
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   ├── package.json
-│   └── Dockerfile
-├── docker-compose.yml
-├── README.md
-└── .gitignore
-```
+1. [Como executar](#como-executar)
+2. [Visão geral](#visão-geral)
+3. [Arquitetura](#arquitetura)
+4. [Os quatro pilares: como foram garantidos](#os-quatro-pilares-como-foram-garantidos)
+5. [API](#api)
+6. [Modelagem de dados](#modelagem-de-dados)
+7. [Frontend](#frontend)
+8. [Testes](#testes)
+9. [Decisões e trade-offs](#decisões-e-trade-offs)
+10. [O que não foi feito](#o-que-não-foi-feito)
 
 ## Como executar
 
-### Opção 1: com Docker Compose
+### Com Docker Compose (recomendado)
 
-Pré-requisitos: Docker Desktop ou Docker Engine com suporte a Compose.
-
-Na raiz do repositório, execute:
+Pré-requisito: Docker com suporte a Compose. Na raiz do repositório:
 
 ```bash
 docker compose up --build
 ```
 
-Isso inicia os containers:
+| Serviço | URL |
+|---|---|
+| Frontend | http://localhost:4200 |
+| API | http://localhost:8080 |
+| Swagger | http://localhost:8080/swagger |
+| Health check | http://localhost:8080/health |
+| PostgreSQL | localhost:5432 |
 
-- Frontend: `http://localhost:4200`
-- API: `http://localhost:8080`
-- Swagger: `http://localhost:8080/swagger`
-- Health check: `http://localhost:8080/health`
-- PostgreSQL: `localhost:5432`
+- As **migrations são aplicadas automaticamente** na subida da API.
+- Se a base estiver vazia, são criadas 3 contas de exemplo (Conta Corrente, Conta Poupança, Conta Investimentos).
+- No container, o frontend é servido por nginx, que também encaminha `/api/*` para a API. O navegador fala só com `localhost:4200`.
+- Para encerrar: `docker compose down` (os dados ficam no volume `postgres_data`; use `-v` para apagá-los).
 
-O frontend é servido pelo Nginx na porta interna 80, publicada como `4200` no host.
-O Nginx encaminha as requisições `/api/` ao serviço `api` na rede do Compose e usa
-`index.html` como fallback para permitir acesso direto às rotas do Angular.
+### Backend localmente
 
-O Compose aplica as migrations do banco automaticamente e cria contas de exemplo quando necessário. Para encerrar os serviços:
-
-```bash
-docker compose down
-```
-
-Os dados do PostgreSQL ficam persistidos no volume `postgres_data`.
-
-### Opção 2: backend localmente
-
-Pré-requisitos: .NET 10 SDK e PostgreSQL 16 em execução.
-
-Configure a connection string antes de iniciar a API:
+Pré-requisitos: .NET 10 SDK e PostgreSQL 16 em execução (pode ser só o serviço do compose: `docker compose up postgres`).
 
 ```bash
 export ConnectionStrings__DefaultConnection="Host=localhost;Port=5432;Database=fraga;Username=postgres;Password=postgres"
+dotnet run --project backend/src/Fraga.Api/Fraga.Api.csproj --no-launch-profile --urls http://localhost:8080
 ```
 
-Ou ajuste o valor em `backend/src/Fraga.Api/appsettings.Development.json`.
+A connection string padrão já está em `backend/src/Fraga.Api/appsettings.json`; a variável de ambiente acima só é necessária se o seu banco for diferente. Usamos a porta 8080 para coincidir com o proxy do frontend (`frontend/proxy.conf.json`).
 
-Em seguida:
-
-```bash
-dotnet run --project backend/src/Fraga.Api/Fraga.Api.csproj --launch-profile http
-```
-
-A API fica disponível em `http://localhost:5007` com o perfil `http`.
-
-### Opção 3: frontend localmente
+### Frontend localmente
 
 ```bash
 cd frontend
-npm install
+npm install --legacy-peer-deps
 npm start
 ```
 
-O frontend usa proxy para a API local e normalmente fica em `http://localhost:4200`.
+Abre em http://localhost:4200 e usa o proxy para `http://localhost:8080`.
 
-## Frontend: arquitetura e componentização
+### Testes
 
-O frontend foi organizado em camadas conceituais para manter a interface mais previsível e fácil de evoluir:
+```bash
+# Backend (os testes de integração exigem Docker em execução: usam Testcontainers)
+dotnet test backend/Fraga.slnx
 
-- `core`: serviços, modelos e regras de integração com a API.
-  - `AccountsService`: consulta contas da API.
-  - `TransactionsService`: consulta extrato e cria transações.
-  - `ToastService`: centraliza feedback visual para sucesso, erro e warning.
-- `features`: páginas e fluxos específicos do domínio.
-  - `accounts`: visão geral das contas e resumo financeiro.
-  - `transactions`: extrato e formulário de criação de transações.
-- `shared`: componentes reutilizáveis e visuais compartilhados pela aplicação.
-  - `app-header`: navegação principal.
-  - `toast`: notificação de feedback.
-  - `summary-card`: blocos de resumo.
+# Frontend (Jest)
+cd frontend
+npm run test:jest -- --runInBand
+```
 
-Além disso, a aplicação usa Angular standalone components, que deixam cada página/componentes independentes, com imports explícitos e menos acoplamento com módulos globais. Isso aumenta modularidade e facilita manutenção.
+O CI (`.github/workflows/ci.yml`) executa build e testes dos dois lados a cada push/PR para `develop` e `main`.
 
-A estrutura de navegação também segue esse princípio:
+## Visão geral
 
-- `/contas`: listar contas e resumo financeiro;
-- `/transacoes`: visualizar extrato;
-- `/transacoes/nova`: registrar nova transação.
+- Criar e consultar contas.
+- Processar eventos de **crédito** e **débito**, atualizando saldo e histórico.
+- Consultar o **extrato paginado** de uma conta, com o saldo resultante de cada lançamento.
+- Interface com listagem de contas, extrato e formulário de lançamento.
 
-Esse modelo separa responsabilidades:
+**Stack:** .NET 10 / ASP.NET Core, EF Core + PostgreSQL 16, Angular 21 + Angular Material, xUnit + Moq + Testcontainers, Jest, Docker Compose.
 
-- serviços cuidam da comunicação com a API;
-- páginas orquestram a experiência do usuário;
-- componentes visuais ficam focados na apresentação;
-- o roteamento controla a navegação entre fluxos sem misturar lógica de negócio com a UI.
+```text
+.
+├── backend/
+│   ├── src/
+│   │   ├── Fraga.Domain/          # entidades, invariantes, exceções de negócio
+│   │   ├── Fraga.Application/     # casos de uso, DTOs, contratos (interfaces)
+│   │   ├── Fraga.Infrastructure/  # EF Core, repositórios, migrations
+│   │   └── Fraga.Api/             # controllers, DI, tratamento de erros, OpenAPI
+│   └── tests/Fraga.Tests/         # unitários e de integração
+├── frontend/
+│   └── src/app/
+│       ├── core/                  # models, services (acesso à API)
+│       ├── features/              # páginas: accounts, transactions
+│       └── shared/                # componentes reutilizáveis (toast)
+└── docker-compose.yml
+```
+
+## Arquitetura
+
+### Backend: camadas com dependência para dentro
+
+```text
+Api ──► Application ──► Domain
+ │           ▲
+ └─► Infrastructure ─┘
+```
+
+- **Domain:** `Account` e `Transaction`. As regras que não podem ser violadas ficam **na entidade**: `Account.Debit` lança `InsufficientBalanceException` se o saldo não cobre o valor, e `Credit`/`Debit` exigem valor positivo. Setters privados: o estado só muda por métodos do domínio. O nome da conta é normalizado e validado no construtor.
+- **Application:** `TransactionService` orquestra o caso de uso; `AccountService` cuida de contas e extrato. Dependem de **interfaces** (`ITransactionRepository`, `IAccountRepository`, `ILogService`), implementadas fora do núcleo.
+- **Infrastructure:** repositórios EF Core, configurações de mapeamento (`IEntityTypeConfiguration`) e migrations. É a única camada que conhece PostgreSQL/Npgsql.
+- **Api:** controllers finos (sem regra de negócio), injeção de dependência, enum como string (`CREDIT`/`DEBIT`) e **`GlobalExceptionHandler`**, que traduz exceções de domínio em respostas `ProblemDetails`.
+
+Efeito prático: a regra de negócio é testável com mocks, sem banco nem HTTP, e trocar a persistência não afeta o domínio.
+
+### Frontend: organização por responsabilidade
+
+- **`core`:** modelos tipados e serviços (`AccountsService`, `TransactionsService`, `ToastService`) que concentram a comunicação com a API e o feedback ao usuário.
+- **`features`:** páginas standalone (`AccountsList`, `TransactionsStatement`, `TransactionForm`) com rotas carregadas sob demanda (`loadComponent`).
+- **`shared`:** componentes reutilizáveis (`Toast`).
+- Serviços retornam `Observable`; as páginas orquestram estados de **carregando / erro / vazio / sucesso**.
+
+## Os quatro pilares: como foram garantidos
+
+### 1. Idempotência: um `eventId` nunca é processado duas vezes
+
+Defesa em três camadas:
+
+1. **Pré-checagem** (`ExistsByEventIdAsync`) antes de qualquer trabalho, que devolve 409 rapidamente no caso comum (reenvio).
+2. **Nova checagem após o lock da conta**, que cobre duas requisições simultâneas do mesmo evento para a mesma conta: a segunda só prossegue depois de a primeira confirmar e então enxerga o evento já gravado.
+3. **Índice único** `IX_transactions_EventId` no banco, a barreira definitiva. Cobre o caso em que o mesmo `eventId` chega em paralelo para **contas diferentes** (o lock de uma conta não protege a outra). A violação do índice é capturada no repositório e convertida em `DuplicateEventException` (HTTP 409).
+
+Sem depender de cache ou memória da aplicação: a garantia vive no banco e vale com várias instâncias da API.
+
+### 2. Consistência: saldo nunca negativo e igual ao histórico
+
+- **Regra de domínio:** `Account.Debit` recusa débito acima do saldo.
+- **Rede de proteção no banco:** `CK_accounts_balance_non_negative`, `CK_transactions_amount_positive` e `CK_transactions_balance_after_non_negative`.
+- **Concorrência:** a conta é lida com `SELECT ... FOR UPDATE` (bloqueio pessimista). Operações na mesma conta são **serializadas**, então não há *lost update* nem dois débitos simultâneos "gastando" o mesmo saldo.
+- **Saldo refletindo o histórico:** cada transação grava `BalanceAfter`, e o saldo da conta é atualizado na mesma operação. Os testes de integração verificam que `saldo == soma do histórico`.
+- **Precisão monetária:** `numeric(18,2)`. Valores com mais de duas casas decimais são **rejeitados** (400) em vez de arredondados em silêncio, para o histórico refletir exatamente o que foi enviado.
+
+### 3. Transacionalidade: tudo ou nada
+
+`ExecuteAtomicAsync` abre uma transação de banco que engloba: checagem de duplicidade → lock da conta → alteração do saldo → inserção da transação → `SaveChanges` → `Commit`. Qualquer exceção (saldo insuficiente, duplicidade, falha de banco) interrompe antes do commit e a transação sofre **rollback** ao ser descartada. Há teste de integração garantindo que um débito rejeitado não deixa nenhum rastro (nem transação, nem alteração de saldo).
+
+### 4. Integridade ponta a ponta: o backend é a fonte da verdade
+
+- O frontend valida para melhorar a experiência (valor obrigatório, > 0, até 2 casas), mas **toda regra é reaplicada no backend**.
+- Erros da API (`409` duplicado, `422` saldo insuficiente, `400` validação) chegam como `ProblemDetails`; o frontend exibe o `detail` retornado pelo servidor.
+- Após um lançamento bem-sucedido, o formulário **recarrega as contas** do backend, então o saldo exibido é o real, e não um valor calculado no cliente.
+- **`eventId` estável por tentativa:** o frontend gera o identificador uma vez e o **reutiliza** se o usuário reenviar os mesmos dados após uma falha (por exemplo, queda de rede). Assim, se a primeira requisição chegou ao servidor mas a resposta se perdeu, o reenvio resulta em "evento já processado" em vez de um lançamento em dobro. Alterar qualquer campo, ou um sucesso, gera um novo `eventId`.
 
 ## API
 
-Os valores de `type` aceitos na API são `CREDIT` e `DEBIT`.
+Documentação interativa: `http://localhost:8080/swagger`. Valores de `type`: `CREDIT` e `DEBIT`.
 
 | Método | Rota | Descrição |
 |---|---|---|
-| `POST` | `/api/accounts` | Cria uma conta com saldo zero |
-| `GET` | `/api/accounts` | Lista as contas e saldos |
-| `GET` | `/api/accounts/{accountId}` | Consulta uma conta específica |
-| `GET` | `/api/accounts/{accountId}/transactions?page=1&pageSize=10` | Consulta o extrato paginado |
-| `POST` | `/api/transactions` | Processa uma transação financeira |
+| `POST` | `/api/accounts` | Cria conta com saldo zero |
+| `GET` | `/api/accounts` | Lista contas e saldos |
+| `GET` | `/api/accounts/{accountId}` | Consulta uma conta |
+| `GET` | `/api/accounts/{accountId}/transactions?page=1&pageSize=10` | Extrato paginado (mais recente primeiro; `pageSize` entre 1 e 100) |
+| `POST` | `/api/transactions` | Processa um evento financeiro |
+| `GET` | `/health` | Health check (inclui o PostgreSQL) |
 
-### Exemplo: criar conta
+### Códigos de resposta do `POST /api/transactions`
+
+| Status | Quando |
+|---|---|
+| `200` | Evento processado; devolve `transactionId`, `eventId`, `accountId` e o saldo resultante |
+| `400` | Payload inválido (ids vazios, tipo inválido, valor ≤ 0, mais de 2 casas decimais) |
+| `404` | Conta inexistente |
+| `409` | `eventId` já processado (idempotência) |
+| `422` | Saldo insuficiente |
+| `500` | Erro inesperado: nenhuma informação interna é exposta ao cliente |
+
+### Exemplos
 
 ```bash
 curl -X POST http://localhost:8080/api/accounts \
   -H "Content-Type: application/json" \
   -d '{"name":"Conta de Teste"}'
-```
 
-### Exemplo: processar crédito
-
-```bash
 curl -X POST http://localhost:8080/api/transactions \
   -H "Content-Type: application/json" \
   -d '{
@@ -172,88 +195,62 @@ curl -X POST http://localhost:8080/api/transactions \
   }'
 ```
 
-Observações:
+Repetir a segunda chamada devolve `409 Conflict`. O arquivo `backend/src/Fraga.Api/Fraga.Api.http` traz requisições prontas.
 
-- `eventId` deve ser único por evento;
-- eventos duplicados são rejeitados;
-- débitos maiores que o saldo disponível são bloqueados;
-- o extrato é paginado e limitado por página para evitar consultas muito grandes;
-- valores monetários são armazenados com precisão de 2 casas decimais.
+## Modelagem de dados
 
-## Arquitetura e componentização
+**`accounts`**: `Id` (uuid, PK), `Name` (varchar(100)), `Balance` (numeric(18,2)), com check `Balance >= 0`.
 
-A arquitetura foi pensada para separar claramente responsabilidades e facilitar evolução do sistema sem acoplar regras de negócio a detalhes de infraestrutura, HTTP ou interface.
+**`transactions`**: `Id` (uuid, PK), `EventId` (uuid), `AccountId` (uuid, FK → accounts, `ON DELETE RESTRICT`), `Type` (text: `Credit`/`Debit`), `Amount` (numeric(18,2)), `OccurredAt` (timestamptz, normalizado para UTC), `BalanceAfter` (numeric(18,2)), com checks `Amount > 0` e `BalanceAfter >= 0`.
 
-### Backend: separação por camadas
+**Índices:**
 
-A estrutura do backend segue uma abordagem orientada a domínio com divisões bem definidas:
+| Índice | Finalidade |
+|---|---|
+| `IX_transactions_EventId` (**único**) | Garantia final de idempotência |
+| `IX_transactions_AccountId_OccurredAt_Id` (`AccountId`, `OccurredAt DESC`, `Id DESC`) | Atende exatamente a consulta do extrato (filtro por conta + ordenação), sem *sort* extra; o `Id` desempata de forma determinística entre lançamentos no mesmo instante |
 
-- `Fraga.Domain`: entidades, invariantes e regras centrais do negócio. Aqui ficam as regras que não dependem de banco, API ou framework.
-- `Fraga.Application`: casos de uso, serviços, contratos e DTOs. É o núcleo da aplicação, responsável por coordenar a lógica de negócio sem saber como os dados são persistidos.
-- `Fraga.Infrastructure`: implementação concreta de acesso a dados, Entity Framework Core, PostgreSQL e repositórios.
-- `Fraga.Api`: endpoints HTTP, serialização JSON, injeção de dependências e mapeamento de erros em respostas estruturadas.
+`ON DELETE RESTRICT` impede apagar uma conta com histórico.
 
-Essa divisão foi escolhida por três motivos principais:
+## Frontend
 
-1. baixo acoplamento: a regra de negócio não depende de implementação específica de banco ou transporte;
-2. testabilidade: é mais simples testar casos de negócio diretamente em camadas de domínio/aplicação sem depender de infraestrutura;
-3. manutenção: mudanças em banco, API, validações ou contratos de entrada podem ser feitas com menor impacto em outras partes do sistema.
-
-Além disso, serviços e repositórios foram abstraídos por interfaces (`ITransactionService`, `IAccountRepository`, etc.), o que favorece inversão de dependência e facilita a criação de testes e substituição de implementações sem quebrar o restante da aplicação.
-
-### Componentização do frontend
-
-No frontend, a organização também foi feita de forma modular e orientada por responsabilidade:
-
-- `core`: modelos de domínio, serviços e abstrações reutilizáveis;
-- `features`: páginas e fluxos de negócio, como contas, transações e extrato;
-- `shared`: componentes reutilizáveis e utilitários visuais;
-- `routes`: roteamento da aplicação.
-
-A aplicação segue uma estrutura de componentes standalone e serviços dedicados para acesso à API. Por exemplo:
-
-- `AccountsService` concentra a comunicação com `/api/accounts`;
-- `TransactionsService` centraliza o acesso aos endpoints de transação e extrato;
-- páginas como `AccountsList`, `TransactionForm` e `TransactionsStatement` são responsáveis pela experiência de usuário e composição visual, enquanto os serviços cuidam do transporte de dados.
-
-Essa organização foi escolhida para manter a UI mais previsível, reduzir duplicação de código e facilitar a evolução do produto em funcionalidades futuras sem misturar regras de negócio com renderização.
-
-### Por que essa arquitetura foi usada
-
-A solução foi desenhada como um projeto de nível pleno, com foco em:
-
-- clareza de responsabilidades;
-- separação entre domínio, aplicação e infraestrutura;
-- baixo acoplamento e alta coesão;
-- facilidade de manutenção e extensão;
-- qualidade operacional com testes e tratamento centralizado de exceções.
-
-Em outras palavras, o objetivo não foi apenas "funcionar", mas demonstrar capacidade de construir software de forma sustentável, profissional e escalável.
+- **Angular 21** (standalone components, control flow `@if/@for`, rotas lazy) e **Angular Material** (campos, select, botões, paginador), com tema alinhado à identidade visual. Layout responsivo com SCSS.
+- **Visão geral (`/contas`):** saldo consolidado, cards de contas e extrato recente da conta selecionada.
+- **Extrato (`/transacoes`):** seleção de conta, saldo atual, tabela com **valor, impacto (+/−) e saldo após cada lançamento**, e paginação com `mat-paginator`.
+- **Nova transação (`/transacoes/nova`):** Reactive Forms com validação inline, formulário bloqueado durante envio/carregamento (evita duplo clique), toasts de sucesso/erro com a mensagem da API.
+- **Estados de interface:** carregamento, erro (com "tentar novamente" no extrato), vazio e sucesso, tratados em cada página.
 
 ## Testes
 
-### Backend
+**Backend (xUnit + Moq + Testcontainers)**
 
-```bash
-dotnet test backend/Fraga.slnx
-```
+- *Unitários:* regras de `Account` (crédito, débito, saldo exato, saldo insuficiente, valores inválidos, nome), `TransactionService` (valor zero, duplicidade antes/depois do lock, conta inexistente, débito sem saldo, normalização UTC, mais de 2 casas decimais), `AccountService` (paginação, ids inválidos) e `GlobalExceptionHandler` (mapeamento de exceção para status, sem vazamento de detalhes em 500).
+- *Integração, contra um PostgreSQL real em container:*
+  - mesmo `eventId` em paralelo na mesma conta → processa **uma** vez;
+  - mesmo `eventId` em paralelo em **contas diferentes** → processa **uma** vez (índice único);
+  - débitos concorrentes que excedem o saldo → saldo nunca fica negativo;
+  - créditos concorrentes → nenhuma atualização é perdida e o saldo é igual ao histórico;
+  - débito rejeitado → nada é gravado.
 
-### Frontend
+**Frontend (Jest)**
 
-```bash
-cd frontend
-npm run test:jest -- --runInBand
-```
+- Serviços: chamadas HTTP, parâmetros de paginação e propagação de erros.
+- Formulário: validações (obrigatório, ≤ 0, mais de 2 casas), envio de crédito/débito, reuso e renovação do `eventId`, mensagens de erro da API (`detail`/`message`/padrão).
+- Páginas: carregamento, seleção de conta, paginação, estados de erro e vazio.
+- `ToastService` e `Toast`.
 
-Também é possível validar o build do frontend com:
+## Decisões e trade-offs
 
-```bash
-cd frontend
-npm run build
-```
-
-## Observações
-
-- o PostgreSQL é usado para garantir integridade transacional e concorrência no processamento de saldo;
-- as migrations são aplicadas automaticamente na inicialização da API;
-- a estrutura atual é adequada para desenvolvimento e validação local; em produção, é recomendável revisar autenticação, autorização, políticas de deploy e configuração de ambiente.
+| Decisão | Por quê | Custo / alternativa |
+|---|---|---|
+| **Bloqueio pessimista** (`FOR UPDATE`) na conta | Corretude simples e previsível: serializa operações da mesma conta, sem laços de retry | Limita a vazão *por conta* (contas diferentes seguem em paralelo). Alternativa: concorrência otimista (coluna de versão) com retry, melhor com pouca contenção, mais complexa |
+| **Checagem de duplicidade antes e depois do lock** + índice único | Resposta rápida (409) no caso comum; o índice cobre as corridas | Uma consulta a mais por requisição. O índice, sozinho, já bastaria para a corretude |
+| **Saldo desnormalizado** em `accounts.Balance` | Leitura O(1) do saldo consolidado | Risco teórico de divergência com o histórico. Mitigado: atualização na mesma transação, checks no banco e testes que comparam saldo × histórico |
+| **Extrato ordenado por `OccurredAt`** | É a ordem natural para o usuário, e o índice composto a atende | `BalanceAfter` reflete a ordem de **processamento**. Se chegar um evento com data anterior a lançamentos já processados, a coluna "saldo após" não segue a sequência visual. Alternativa: ordenar por ordem de gravação |
+| **Rejeitar > 2 casas decimais** (400) | O histórico reflete exatamente o enviado, sem arredondamento silencioso | Clientes precisam respeitar a precisão |
+| **Processamento síncrono** | Resposta imediata com o saldo resultante; menos infraestrutura | Sem desacoplamento/buffer de picos. Alternativa: fila (RabbitMQ) com processamento assíncrono, ao custo de consistência eventual na UI |
+| **Migrations na inicialização** | Sobe com um único `docker compose up` | Em produção com várias instâncias, preferir um passo de migração dedicado no deploy |
+| **Exceções de domínio + `GlobalExceptionHandler`** | Controllers finos e mapeamento HTTP em um único lugar; 500 sem vazamento | Exceções como fluxo de controle em regras de negócio esperadas; aceitável nesta escala |
+| **Enum persistido como texto** | Legível e seguro contra reordenação de valores | Ocupa mais espaço que um inteiro |
+| **Jest em vez de Karma** | Execução mais rápida, ótima ergonomia de mocks | Diferente do runner padrão do CLI |
+| **`eventId` gerado pelo cliente, mas estável por tentativa** | Torna reenvios seguros (idempotentes) | O usuário não informa o ID manualmente |
