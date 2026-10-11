@@ -65,6 +65,10 @@ Isso inicia os containers:
 - Health check: `http://localhost:8080/health`
 - PostgreSQL: `localhost:5432`
 
+O frontend é servido pelo Nginx na porta interna 80, publicada como `4200` no host.
+O Nginx encaminha as requisições `/api/` ao serviço `api` na rede do Compose e usa
+`index.html` como fallback para permitir acesso direto às rotas do Angular.
+
 O Compose aplica as migrations do banco automaticamente e cria contas de exemplo quando necessário. Para encerrar os serviços:
 
 ```bash
@@ -253,4 +257,3 @@ npm run build
 - o PostgreSQL é usado para garantir integridade transacional e concorrência no processamento de saldo;
 - as migrations são aplicadas automaticamente na inicialização da API;
 - a estrutura atual é adequada para desenvolvimento e validação local; em produção, é recomendável revisar autenticação, autorização, políticas de deploy e configuração de ambiente.
-

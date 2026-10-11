@@ -43,7 +43,7 @@ services:
     container_name: fraga-frontend
     restart: unless-stopped
     ports:
-      - "4200:4200"
+      - "4200:80"
 
 volumes:
   postgres_data:
