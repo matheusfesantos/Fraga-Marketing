@@ -1,18 +1,17 @@
-
 services:
   postgres:
     image: postgres:16
     container_name: fraga-postgres
     environment:
-      POSTGRES_DB: fraga_db
+      POSTGRES_DB: fraga
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d fraga_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d fraga"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -36,9 +35,8 @@ services:
     ports:
       - "8080:8080"
     environment:
-      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=fraga_db;Username=postgres;Password=${POSTGRES_PASSWORD}"
-      Redis__ConnectionString: "redis:6379"
-      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=fraga;Username=postgres;Password=postgres"
+      Redis__ConnectionString: "redis:6379,abortConnect=false"
     depends_on:
       postgres:
         condition: service_healthy

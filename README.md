@@ -19,11 +19,13 @@ Solução full-stack para gerenciar contas bancárias e processar eventos financ
 
 ### Com Docker Compose (recomendado)
 
-Pré-requisito: Docker com suporte a Compose. Na raiz do repositório:
+Pré-requisito: Docker com suporte a Compose. Na raiz do repositório, inicie os serviços:
 
 ```bash
 docker compose up --build
 ```
+
+Para este teste técnico, as credenciais do PostgreSQL estão fixas na configuração: usuário `postgres`, senha `postgres` e banco `fraga_db`. Não use essas credenciais em produção.
 
 | Serviço | URL |
 |---|---|

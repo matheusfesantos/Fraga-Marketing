@@ -1,3 +1,4 @@
+
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
@@ -13,13 +14,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using StackExchange.Redis;
 
-
 const string CorsPolicyName = "FrontendPolicy";
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Redis: lê Redis:ConnectionString, configurado no Docker Compose
+// pela variável de ambiente Redis__ConnectionString.
 var redisConnection =
-    builder.Configuration.GetConnectionString("Redis")
+    builder.Configuration["Redis:ConnectionString"]
     ?? "localhost:6379";
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(
@@ -51,6 +53,7 @@ builder.Services.AddOpenApi(options =>
                 .Select(name => (JsonNode)JsonValue.Create(
                     JsonNamingPolicy.SnakeCaseUpper.ConvertName(name))!)
                 .ToList();
+
             schema.Default = JsonValue.Create(
                 JsonNamingPolicy.SnakeCaseUpper.ConvertName(
                     nameof(TransactionType.Credit)));
@@ -97,6 +100,7 @@ await using (var scope = app.Services.CreateAsyncScope())
 app.UseExceptionHandler();
 
 app.MapOpenApi();
+
 app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint("/openapi/v1.json", "Fraga API v1");
