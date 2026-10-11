@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using Fraga.Api.Middleware;
 using Fraga.Api.Services;
 using Fraga.Application.Abstractions;
 using Fraga.Application.Accounts;
@@ -10,11 +11,19 @@ using Fraga.Infrastructure.Data;
 using Fraga.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
+using StackExchange.Redis;
 
 
 const string CorsPolicyName = "FrontendPolicy";
 
 var builder = WebApplication.CreateBuilder(args);
+
+var redisConnection =
+    builder.Configuration.GetConnectionString("Redis")
+    ?? "localhost:6379";
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(
+    _ => ConnectionMultiplexer.Connect(redisConnection));
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
@@ -102,5 +111,7 @@ app.UseCors(CorsPolicyName);
 
 app.MapControllers();
 app.MapHealthChecks("/health");
+
+app.UseMiddleware<RedisRateLimitMiddleware>();
 
 app.Run();
