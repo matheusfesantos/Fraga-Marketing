@@ -1,11 +1,29 @@
+@use '@angular/material' as mat;
+
+html {
+  min-height: 100%;
+  color-scheme: light;
+
+  @include mat.theme(
+    (
+      color: mat.$azure-palette,
+      typography: (
+        plain-family: (Inter, ui-sans-serif, system-ui, sans-serif),
+        brand-family: (Inter, ui-sans-serif, system-ui, sans-serif),
+      ),
+      density: 0,
+    )
+  );
+
+  // Alinha o primário do Material à identidade visual do projeto.
+  --mat-sys-primary: #003b71;
+  --mat-sys-on-primary: #fff;
+}
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
-}
-
-html {
-  min-height: 100%;
 }
 
 body {
