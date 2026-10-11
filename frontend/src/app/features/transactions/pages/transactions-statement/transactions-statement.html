@@ -10,23 +10,24 @@
   </div>
 
   <section class="filter-card">
-    <label for="account">Conta selecionada</label>
-    <select
-      id="account"
-      [ngModel]="selectedAccountId"
-      (ngModelChange)="onAccountChange($event)"
-      name="account"
-      [disabled]="accounts.length === 0"
-    >
-      @if (accounts.length === 0) {
-        <option value="">
-          {{ loading ? 'Carregando contas...' : 'Nenhuma conta disponível' }}
-        </option>
-      }
-      @for (account of accounts; track account.id) {
-        <option [value]="account.id">{{ account.name }}</option>
-      }
-    </select>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Conta selecionada</mat-label>
+      <mat-select
+        [ngModel]="selectedAccountId"
+        (ngModelChange)="onAccountChange($event)"
+        name="account"
+        [disabled]="accounts.length === 0"
+      >
+        @if (accounts.length === 0) {
+          <mat-option value="" disabled>
+            {{ loading ? 'Carregando contas...' : 'Nenhuma conta disponível' }}
+          </mat-option>
+        }
+        @for (account of accounts; track account.id) {
+          <mat-option [value]="account.id">{{ account.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
   </section>
 
   @if (loading) {
@@ -38,7 +39,9 @@
     <div class="state-card error-state">
       <h3>Não foi possível carregar o extrato</h3>
       <p>{{ error }}</p>
-      <button type="button" (click)="loadStatement()">Tentar novamente</button>
+      <button mat-stroked-button type="button" (click)="loadStatement()">
+        Tentar novamente
+      </button>
     </div>
   } @else if (accounts.length === 0) {
     <div class="state-card">
@@ -123,27 +126,14 @@
           </table>
         </div>
 
-        <div class="pagination">
-          <span>
-            Página {{ statement?.page ?? page }} de {{ statement?.totalPages ?? 0 }}
-          </span>
-          <div class="pagination-actions">
-            <button
-              type="button"
-              [disabled]="page <= 1 || loading"
-              (click)="changePage(page - 1)"
-            >
-              Anterior
-            </button>
-            <button
-              type="button"
-              [disabled]="!statement || page >= statement.totalPages || loading"
-              (click)="changePage(page + 1)"
-            >
-              Próxima
-            </button>
-          </div>
-        </div>
+        <mat-paginator
+          [length]="statement?.totalItems ?? 0"
+          [pageSize]="pageSize"
+          [pageIndex]="page - 1"
+          [hidePageSize]="true"
+          [showFirstLastButtons]="true"
+          (page)="onPageChange($event)"
+        />
       }
     </section>
   }

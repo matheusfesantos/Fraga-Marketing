@@ -270,4 +270,19 @@ describe('TransactionsStatement', () => {
     expect(component.loading).toBe(false);
     expect(transactionsService.getStatement).not.toHaveBeenCalled();
   });
+
+  it('deve mudar de página ao usar o paginador do Material', () => {
+    fixture.detectChanges();
+
+    transactionsService.getStatement.mockClear();
+
+    component.onPageChange({ pageIndex: 1, pageSize: 10, length: 20 });
+
+    expect(component.page).toBe(2);
+    expect(transactionsService.getStatement).toHaveBeenCalledWith(
+      'account-1',
+      2,
+      10,
+    );
+  });
 });

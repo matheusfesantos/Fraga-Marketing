@@ -34,42 +34,22 @@ h1 {
 }
 
 .filter-card,
-.statement-card {
+.statement-card,
+.state-card,
+.balance-card {
   background: #fff;
-  border: 1px solid #e9edf5;
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgb(24 39 75 / 4%);
+  border: 1px solid #e3e9f1;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgb(24 39 75 / 3%);
 }
 
 .filter-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
   padding: 20px 24px;
   margin-bottom: 20px;
-}
 
-.filter-card label {
-  color: #34415a;
-  font-size: 14px;
-  font-weight: 650;
-}
-
-.filter-card select {
-  width: min(100%, 320px);
-  padding: 12px 14px;
-  color: #17233c;
-  font: inherit;
-  background: #fff;
-  border: 1px solid #dce3ef;
-  border-radius: 10px;
-  outline: none;
-}
-
-.filter-card select:focus {
-  border-color: #005a9c;
-  box-shadow: 0 0 0 3px rgb(36 99 235 / 12%);
+  mat-form-field {
+    width: min(100%, 320px);
+  }
 }
 
 .balance-card {
@@ -79,20 +59,18 @@ h1 {
   gap: 20px;
   padding: 26px;
   margin-bottom: 28px;
-  color: #fff;
-  background: linear-gradient(120deg, #003b71, #005a9c);
-  border-radius: 16px;
-  box-shadow: 0 12px 28px rgb(36 99 235 / 14%);
+  color: #172b4d;
 }
 
 .balance-label {
   margin: 0 0 10px;
-  color: rgb(255 255 255 / 85%);
+  color: #778197;
   font-size: 14px;
 }
 
 .balance-card h2 {
   margin: 0;
+  color: #172b4d;
   font-size: clamp(26px, 4vw, 34px);
   font-weight: 750;
   letter-spacing: -0.7px;
@@ -105,11 +83,12 @@ h1 {
   width: 54px;
   height: 54px;
   place-items: center;
+  color: #005a9c;
   font-size: 19px;
   font-weight: 750;
-  background: rgb(255 255 255 / 16%);
-  border: 1px solid rgb(255 255 255 / 20%);
-  border-radius: 15px;
+  background: #eaf1f7;
+  border: 1px solid #d8e5ef;
+  border-radius: 11px;
 }
 
 .statement-heading {
@@ -206,49 +185,9 @@ tbody tr:hover {
   color: #c03737;
 }
 
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 20px 24px;
+mat-paginator {
   border-top: 1px solid #edf0f6;
-}
-
-.pagination > span {
-  color: #778197;
-  font-size: 13px;
-}
-
-.pagination-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.pagination button,
-.state-card button {
-  padding: 10px 15px;
-  color: #003b71;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 650;
-  background: #fff;
-  border: 1px solid #dce5fb;
-  border-radius: 9px;
-  cursor: pointer;
-  transition: background 150ms ease;
-}
-
-.pagination button:hover:not(:disabled),
-.state-card button:hover {
-  background: #eaf1f7;
-}
-
-.pagination button:disabled {
-  color: #a4adbd;
-  background: #f6f7fa;
-  border-color: #edf0f6;
-  cursor: not-allowed;
+  border-radius: 0 0 12px 12px;
 }
 
 .empty-state,
@@ -323,14 +262,11 @@ tbody tr:hover {
   }
 
   .filter-card {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 10px;
     padding: 18px;
-  }
 
-  .filter-card select {
-    width: 100%;
+    mat-form-field {
+      width: 100%;
+    }
   }
 
   .balance-card {
@@ -345,20 +281,6 @@ tbody tr:hover {
   td {
     padding: 14px;
   }
-
-  .pagination {
-    align-items: flex-start;
-    flex-direction: column;
-    padding: 18px;
-  }
-
-  .pagination-actions {
-    width: 100%;
-  }
-
-  .pagination button {
-    flex: 1;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -368,34 +290,4 @@ tbody tr:hover {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-.filter-card,
-.statement-card,
-.state-card {
-  border-radius: 12px;
-  box-shadow: 0 3px 12px rgb(24 39 75 / 3%);
-}
-
-.balance-card {
-  color: #172b4d;
-  background: #fff;
-  border: 1px solid #e3e9f1;
-  border-radius: 12px;
-  box-shadow: 0 3px 12px rgb(24 39 75 / 3%);
-}
-
-.balance-label {
-  color: #778197;
-}
-
-.balance-card h2 {
-  color: #172b4d;
-}
-
-.balance-icon {
-  color: #005a9c;
-  background: #eaf1f7;
-  border: 1px solid #d8e5ef;
-  border-radius: 11px;
 }
