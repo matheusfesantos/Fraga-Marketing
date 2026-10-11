@@ -1,6 +1,6 @@
 # Fraga Bank: motor de saldos de contas
 
-Solução full-stack para gerenciar contas bancárias e processar eventos financeiros (crédito e débito) com **idempotência**, **consistência** e **transacionalidade**, com API em .NET e interface em Angular.
+Solução full-stack para gerenciar contas bancárias e processar eventos financeiros (crédito e débito) com **idempotência**, **consistência**, **transacionalidade** e **limitação de requisições**, com API em .NET e interface em Angular.
 
 ## Sumário
 
@@ -32,22 +32,24 @@ docker compose up --build
 | Swagger | http://localhost:8080/swagger |
 | Health check | http://localhost:8080/health |
 | PostgreSQL | localhost:5432 |
+| Redis | localhost:6379 |
 
 - As **migrations são aplicadas automaticamente** na subida da API.
 - Se a base estiver vazia, são criadas 3 contas de exemplo (Conta Corrente, Conta Poupança, Conta Investimentos).
 - No container, o frontend é servido por nginx, que também encaminha `/api/*` para a API. O navegador fala só com `localhost:4200`.
-- Para encerrar: `docker compose down` (os dados ficam no volume `postgres_data`; use `-v` para apagá-los).
+- O Redis armazena os contadores do limite de requisições; PostgreSQL e Redis usam volumes persistentes.
+- Para encerrar: `docker compose down` (os dados ficam nos volumes `postgres_data` e `redis_data`; use `-v` para apagá-los).
 
 ### Backend localmente
 
-Pré-requisitos: .NET 10 SDK e PostgreSQL 16 em execução (pode ser só o serviço do compose: `docker compose up postgres`).
+Pré-requisitos: .NET 10 SDK, PostgreSQL 16 e Redis 7 em execução (pode iniciar as dependências pelo Compose: `docker compose up postgres redis`).
 
 ```bash
 export ConnectionStrings__DefaultConnection="Host=localhost;Port=5432;Database=fraga;Username=postgres;Password=postgres"
 dotnet run --project backend/src/Fraga.Api/Fraga.Api.csproj --no-launch-profile --urls http://localhost:8080
 ```
 
-A connection string padrão já está em `backend/src/Fraga.Api/appsettings.json`; a variável de ambiente acima só é necessária se o seu banco for diferente. Usamos a porta 8080 para coincidir com o proxy do frontend (`frontend/proxy.conf.json`).
+A connection string padrão já está em `backend/src/Fraga.Api/appsettings.json`; as configurações padrão apontam para PostgreSQL e Redis locais. Use `ConnectionStrings__DefaultConnection` ou `ConnectionStrings__Redis` para substituir os endereços conforme necessário. Usamos a porta 8080 para coincidir com o proxy do frontend (`frontend/proxy.conf.json`).
 
 ### Frontend localmente
 
@@ -77,9 +79,10 @@ O CI (`.github/workflows/ci.yml`) executa build e testes dos dois lados a cada p
 - Criar e consultar contas.
 - Processar eventos de **crédito** e **débito**, atualizando saldo e histórico.
 - Consultar o **extrato paginado** de uma conta, com o saldo resultante de cada lançamento.
+- Limitar requisições por endereço IP com contadores compartilhados no Redis.
 - Interface com listagem de contas, extrato e formulário de lançamento.
 
-**Stack:** .NET 10 / ASP.NET Core, EF Core + PostgreSQL 16, Angular 21 + Angular Material, xUnit + Moq + Testcontainers, Jest, Docker Compose.
+**Stack:** .NET 10 / ASP.NET Core, EF Core + PostgreSQL 16, Redis 7, Angular 21 + Angular Material, xUnit + Moq + Testcontainers, Jest, Docker Compose.
 
 ```text
 .
@@ -111,7 +114,7 @@ Api ──► Application ──► Domain
 - **Domain:** `Account` e `Transaction`. As regras que não podem ser violadas ficam **na entidade**: `Account.Debit` lança `InsufficientBalanceException` se o saldo não cobre o valor, e `Credit`/`Debit` exigem valor positivo. Setters privados: o estado só muda por métodos do domínio. O nome da conta é normalizado e validado no construtor.
 - **Application:** `TransactionService` orquestra o caso de uso; `AccountService` cuida de contas e extrato. Dependem de **interfaces** (`ITransactionRepository`, `IAccountRepository`, `ILogService`), implementadas fora do núcleo.
 - **Infrastructure:** repositórios EF Core, configurações de mapeamento (`IEntityTypeConfiguration`) e migrations. É a única camada que conhece PostgreSQL/Npgsql.
-- **Api:** controllers finos (sem regra de negócio), injeção de dependência, enum como string (`CREDIT`/`DEBIT`) e **`GlobalExceptionHandler`**, que traduz exceções de domínio em respostas `ProblemDetails`.
+- **Api:** controllers finos (sem regra de negócio), injeção de dependência, enum como string (`CREDIT`/`DEBIT`), **`GlobalExceptionHandler`** e middleware de limite de requisições com contadores no Redis.
 
 Efeito prático: a regra de negócio é testável com mocks, sem banco nem HTTP, e trocar a persistência não afeta o domínio.
 
@@ -165,6 +168,19 @@ Documentação interativa: `http://localhost:8080/swagger`. Valores de `type`: `
 | `GET` | `/api/accounts/{accountId}/transactions?page=1&pageSize=10` | Extrato paginado (mais recente primeiro; `pageSize` entre 1 e 100) |
 | `POST` | `/api/transactions` | Processa um evento financeiro |
 | `GET` | `/health` | Health check (inclui o PostgreSQL) |
+
+### Limite de requisições
+
+A API aceita até **100 requisições por endereço IP a cada minuto**. O contador fica no Redis, então o limite é compartilhado entre instâncias da API. O endereço IP é armazenado como hash na chave do contador. A rota `/health` não consome o limite.
+
+As respostas às demais rotas incluem os cabeçalhos `X-RateLimit-Limit` e `X-RateLimit-Remaining`. Ao exceder o limite, a API retorna `429 Too Many Requests`, o cabeçalho `Retry-After: 60` e um corpo JSON:
+
+```json
+{
+  "error": "Limite de requisições excedido.",
+  "message": "Tente novamente em instantes."
+}
+```
 
 ### Códigos de resposta do `POST /api/transactions`
 
@@ -249,6 +265,7 @@ Repetir a segunda chamada devolve `409 Conflict`. O arquivo `backend/src/Fraga.A
 | **Extrato ordenado por `OccurredAt`** | É a ordem natural para o usuário, e o índice composto a atende | `BalanceAfter` reflete a ordem de **processamento**. Se chegar um evento com data anterior a lançamentos já processados, a coluna "saldo após" não segue a sequência visual. Alternativa: ordenar por ordem de gravação |
 | **Rejeitar > 2 casas decimais** (400) | O histórico reflete exatamente o enviado, sem arredondamento silencioso | Clientes precisam respeitar a precisão |
 | **Processamento síncrono** | Resposta imediata com o saldo resultante; menos infraestrutura | Sem desacoplamento/buffer de picos. Alternativa: fila (RabbitMQ) com processamento assíncrono, ao custo de consistência eventual na UI |
+| **Limite de 100 requisições por IP/minuto no Redis** | Protege a API contra excesso de chamadas e compartilha contadores entre instâncias | Requer Redis disponível e aplica o mesmo limite por IP a todas as rotas, exceto `/health`; limites por endpoint e configuração dinâmica ficam para uma evolução futura |
 | **Migrations na inicialização** | Sobe com um único `docker compose up` | Em produção com várias instâncias, preferir um passo de migração dedicado no deploy |
 | **Exceções de domínio + `GlobalExceptionHandler`** | Controllers finos e mapeamento HTTP em um único lugar; 500 sem vazamento | Exceções como fluxo de controle em regras de negócio esperadas; aceitável nesta escala |
 | **Enum persistido como texto** | Legível e seguro contra reordenação de valores | Ocupa mais espaço que um inteiro |
