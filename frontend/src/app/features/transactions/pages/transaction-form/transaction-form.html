@@ -17,11 +17,11 @@
         </div>
     </div>
 
-    <form (ngSubmit)="submit()">
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
         <div class="form-field">
             <label for="accountId">Conta</label>
-            <select id="accountId" name="accountId" [(ngModel)]="accountId" required
-                [disabled]="loadingAccounts || submitting || accounts.length === 0">
+            <select id="accountId" formControlName="accountId"
+                [class.invalid]="showErrors(form.controls.accountId)">
                 <option value="" disabled>Selecione uma conta</option>
                 @for (account of accounts; track account.id) {
                 <option [value]="account.id">
@@ -32,6 +32,10 @@
 
             @if (loadingAccounts) {
             <small>Carregando contas...</small>
+            } @else if (accounts.length === 0) {
+            <small class="field-error">Nenhuma conta disponível para movimentação.</small>
+            } @else if (showErrors(form.controls.accountId)) {
+            <small class="field-error">Selecione uma conta.</small>
             }
         </div>
 
@@ -39,8 +43,8 @@
             <label>Tipo de transação</label>
 
             <div class="type-options">
-                <label class="type-option" [class.selected-credit]="type === 'CREDIT'">
-                    <input type="radio" name="type" [(ngModel)]="type" value="CREDIT" [disabled]="submitting" />
+                <label class="type-option" [class.selected-credit]="form.controls.type.value === 'CREDIT'">
+                    <input type="radio" formControlName="type" value="CREDIT" />
                     <span class="type-symbol credit-symbol">+</span>
                     <span>
                         <strong>Crédito</strong>
@@ -48,8 +52,8 @@
                     </span>
                 </label>
 
-                <label class="type-option" [class.selected-debit]="type === 'DEBIT'">
-                    <input type="radio" name="type" [(ngModel)]="type" value="DEBIT" [disabled]="submitting" />
+                <label class="type-option" [class.selected-debit]="form.controls.type.value === 'DEBIT'">
+                    <input type="radio" formControlName="type" value="DEBIT" />
                     <span class="type-symbol debit-symbol">−</span>
                     <span>
                         <strong>Débito</strong>
@@ -62,20 +66,33 @@
         <div class="form-field">
             <label for="amount">Valor da transação</label>
 
-            <div class="amount-input">
+            <div class="amount-input" [class.invalid]="showErrors(form.controls.amount)">
                 <span>R$</span>
-                <input id="amount" name="amount" type="number" [(ngModel)]="amount" min="0.01" step="0.01"
-                    placeholder="0,00" required [disabled]="submitting" />
+                <input id="amount" type="number" formControlName="amount" min="0.01" step="0.01"
+                    placeholder="0,00" />
             </div>
 
-            <small>Informe um valor maior que zero.</small>
+            @if (showErrors(form.controls.amount)) {
+            <small class="field-error">
+                @if (form.controls.amount.hasError('required')) {
+                Informe o valor da transação.
+                } @else if (form.controls.amount.hasError('min')) {
+                Informe um valor maior que zero.
+                } @else if (form.controls.amount.hasError('maxDecimals')) {
+                Use no máximo duas casas decimais.
+                } @else {
+                Informe um valor numérico válido.
+                }
+            </small>
+            } @else {
+            <small>Informe um valor maior que zero, com até duas casas decimais.</small>
+            }
         </div>
 
         <div class="form-actions">
             <a routerLink="/contas" class="button-secondary">Cancelar</a>
 
-            <button type="submit" class="button-primary"
-                [disabled]="loadingAccounts || submitting || accounts.length === 0">
+            <button type="submit" class="button-primary" [disabled]="form.disabled">
                 @if (submitting) {
                 Registrando...
                 } @else {

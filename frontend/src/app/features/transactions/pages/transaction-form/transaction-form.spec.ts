@@ -9,18 +9,20 @@ import { TransactionsService } from '../../../../core/services/Transaction/trans
 import { ToastService } from '../../../../core/services/Toast/toast';
 import { Account } from '../../../../core/models/account.model';
 
+type SentTransaction = {
+    eventId: string;
+    accountId: string;
+    type: 'CREDIT' | 'DEBIT';
+    amount: number;
+    occurredAt: string;
+};
+
 describe('TransactionForm', () => {
     let component: TransactionForm;
     let fixture: ComponentFixture<TransactionForm>;
 
-    let accountsService: {
-        getAll: jest.Mock;
-    };
-
-    let transactionsService: {
-        create: jest.Mock;
-    };
-
+    let accountsService: { getAll: jest.Mock };
+    let transactionsService: { create: jest.Mock };
     let toastService: {
         success: jest.Mock;
         error: jest.Mock;
@@ -28,17 +30,12 @@ describe('TransactionForm', () => {
     };
 
     const mockAccounts: Account[] = [
-        {
-            id: 'account-1',
-            name: 'Conta Corrente',
-            balance: 1500,
-        },
-        {
-            id: 'account-2',
-            name: 'Conta Poupança',
-            balance: 2500,
-        },
+        { id: 'account-1', name: 'Conta Corrente', balance: 1500 },
+        { id: 'account-2', name: 'Conta Poupança', balance: 2500 },
     ];
+
+    const sentTransaction = (call: number): SentTransaction =>
+        transactionsService.create.mock.calls[call][0] as SentTransaction;
 
     beforeEach(async () => {
         accountsService = {
@@ -80,8 +77,9 @@ describe('TransactionForm', () => {
 
         expect(accountsService.getAll).toHaveBeenCalledTimes(1);
         expect(component.accounts).toEqual(mockAccounts);
-        expect(component.accountId).toBe('account-1');
+        expect(component.form.controls.accountId.value).toBe('account-1');
         expect(component.loadingAccounts).toBe(false);
+        expect(component.form.enabled).toBe(true);
     });
 
     it('deve tratar erro ao carregar as contas', () => {
@@ -92,57 +90,77 @@ describe('TransactionForm', () => {
         fixture.detectChanges();
 
         expect(component.loadingAccounts).toBe(false);
+        expect(component.form.disabled).toBe(true);
         expect(toastService.error).toHaveBeenCalledWith(
             'Não foi possível carregar as contas.',
         );
     });
 
-    it('deve avisar quando nenhuma conta estiver selecionada', () => {
+    it('não deve enviar quando não houver conta disponível', () => {
+        accountsService.getAll.mockReturnValue(of([]));
+
         fixture.detectChanges();
-        component.accountId = '';
+        component.submit();
+
+        expect(component.form.disabled).toBe(true);
+        expect(transactionsService.create).not.toHaveBeenCalled();
+    });
+
+    it('deve avisar e não enviar quando nenhuma conta estiver selecionada', () => {
+        fixture.detectChanges();
+        component.form.controls.accountId.setValue('');
+        component.form.controls.amount.setValue(100);
 
         component.submit();
 
+        expect(component.form.controls.accountId.hasError('required')).toBe(true);
         expect(toastService.warning).toHaveBeenCalledWith(
-            'Selecione uma conta.',
+            'Corrija os campos destacados.',
         );
         expect(transactionsService.create).not.toHaveBeenCalled();
     });
 
-    it.each([null, 0, -10, Number.NaN, Number.POSITIVE_INFINITY])(
-        'deve rejeitar valor inválido: %s',
-        (amount) => {
-            fixture.detectChanges();
-            component.accountId = 'account-1';
-            component.amount = amount;
-
-            component.submit();
-
-            expect(toastService.warning).toHaveBeenCalledWith(
-                'Informe um valor maior que zero.',
-            );
-            expect(transactionsService.create).not.toHaveBeenCalled();
-        },
-    );
-
-    it('deve registrar uma transação com sucesso', () => {
+    it.each([
+        [null, 'required'],
+        [0, 'min'],
+        [-10, 'min'],
+        [10.555, 'maxDecimals'],
+        [Number.NaN, 'invalidNumber'],
+        [Number.POSITIVE_INFINITY, 'invalidNumber'],
+    ])('deve rejeitar valor inválido %s (%s)', (amount, errorKey) => {
         fixture.detectChanges();
+        component.form.controls.amount.setValue(amount);
 
-        component.accountId = 'account-1';
-        component.type = 'CREDIT';
-        component.amount = 250;
+        component.submit();
+
+        expect(component.form.controls.amount.hasError(errorKey)).toBe(true);
+        expect(component.form.controls.amount.touched).toBe(true);
+        expect(toastService.warning).toHaveBeenCalledWith(
+            'Corrija os campos destacados.',
+        );
+        expect(transactionsService.create).not.toHaveBeenCalled();
+    });
+
+    it('deve aceitar valor com até duas casas decimais', () => {
+        fixture.detectChanges();
+        component.form.controls.amount.setValue(10.55);
+
+        expect(component.form.controls.amount.valid).toBe(true);
+    });
+
+    it('deve registrar uma transação de crédito com sucesso', () => {
+        fixture.detectChanges();
+        component.form.patchValue({
+            accountId: 'account-1',
+            type: 'CREDIT',
+            amount: 250,
+        });
 
         component.submit();
 
         expect(transactionsService.create).toHaveBeenCalledTimes(1);
 
-        const transaction = transactionsService.create.mock.calls[0][0] as {
-            eventId: string;
-            accountId: string;
-            type: 'CREDIT' | 'DEBIT';
-            amount: number;
-            occurredAt: string;
-        };
+        const transaction = sentTransaction(0);
 
         expect(transaction).toEqual(
             expect.objectContaining({
@@ -157,16 +175,28 @@ describe('TransactionForm', () => {
         expect(toastService.success).toHaveBeenCalledWith(
             'Transação registrada com sucesso!',
         );
-        expect(component.amount).toBeNull();
+        expect(component.form.controls.amount.value).toBeNull();
         expect(component.submitting).toBe(false);
+        expect(component.form.enabled).toBe(true);
+    });
+
+    it('deve recarregar as contas após o sucesso para refletir o saldo do backend', () => {
+        fixture.detectChanges();
+        component.form.controls.amount.setValue(250);
+
+        component.submit();
+
+        expect(accountsService.getAll).toHaveBeenCalledTimes(2);
+        expect(component.form.controls.accountId.value).toBe('account-1');
     });
 
     it('deve registrar uma transação de débito', () => {
         fixture.detectChanges();
-
-        component.accountId = 'account-2';
-        component.type = 'DEBIT';
-        component.amount = 100;
+        component.form.patchValue({
+            accountId: 'account-2',
+            type: 'DEBIT',
+            amount: 100,
+        });
 
         component.submit();
 
@@ -179,57 +209,78 @@ describe('TransactionForm', () => {
         );
     });
 
+    it('deve reutilizar o eventId ao reenviar os mesmos dados após uma falha', () => {
+        fixture.detectChanges();
+        transactionsService.create.mockReturnValue(
+            throwError(() => ({ status: 0 })),
+        );
+        component.form.controls.amount.setValue(200);
+
+        component.submit();
+        component.submit();
+
+        expect(transactionsService.create).toHaveBeenCalledTimes(2);
+        expect(sentTransaction(1).eventId).toBe(sentTransaction(0).eventId);
+    });
+
+    it('deve gerar um novo eventId quando os dados forem alterados', () => {
+        fixture.detectChanges();
+        transactionsService.create.mockReturnValue(
+            throwError(() => ({ status: 0 })),
+        );
+        component.form.controls.amount.setValue(200);
+
+        component.submit();
+        component.form.controls.amount.setValue(300);
+        component.submit();
+
+        expect(sentTransaction(1).eventId).not.toBe(sentTransaction(0).eventId);
+    });
+
+    it('deve gerar um novo eventId após um envio bem-sucedido', () => {
+        fixture.detectChanges();
+        component.form.controls.amount.setValue(200);
+        component.submit();
+
+        component.form.controls.amount.setValue(200);
+        component.submit();
+
+        expect(sentTransaction(1).eventId).not.toBe(sentTransaction(0).eventId);
+    });
+
     it('deve exibir a mensagem de erro retornada pela API em detail', () => {
         fixture.detectChanges();
-
         transactionsService.create.mockReturnValue(
-            throwError(() => ({
-                error: { detail: 'Saldo insuficiente' },
-            })),
+            throwError(() => ({ error: { detail: 'Saldo insuficiente' } })),
         );
-
-        component.accountId = 'account-1';
-        component.amount = 200;
+        component.form.controls.amount.setValue(200);
 
         component.submit();
 
-        expect(toastService.error).toHaveBeenCalledWith(
-            'Saldo insuficiente',
-        );
+        expect(toastService.error).toHaveBeenCalledWith('Saldo insuficiente');
         expect(component.submitting).toBe(false);
+        expect(component.form.enabled).toBe(true);
     });
 
     it('deve utilizar a mensagem message quando detail não estiver disponível', () => {
         fixture.detectChanges();
-
         transactionsService.create.mockReturnValue(
-            throwError(() => ({
-                error: { message: 'Conta bloqueada' },
-            })),
+            throwError(() => ({ error: { message: 'Conta bloqueada' } })),
         );
-
-        component.accountId = 'account-1';
-        component.amount = 200;
+        component.form.controls.amount.setValue(200);
 
         component.submit();
 
-        expect(toastService.error).toHaveBeenCalledWith(
-            'Conta bloqueada',
-        );
+        expect(toastService.error).toHaveBeenCalledWith('Conta bloqueada');
         expect(component.submitting).toBe(false);
     });
 
     it('deve exibir mensagem padrão quando a API não fornecer mensagem válida', () => {
         fixture.detectChanges();
-
         transactionsService.create.mockReturnValue(
-            throwError(() => ({
-                error: { detail: '   ', message: 123 },
-            })),
+            throwError(() => ({ error: { detail: '   ', message: 123 } })),
         );
-
-        component.accountId = 'account-1';
-        component.amount = 200;
+        component.form.controls.amount.setValue(200);
 
         component.submit();
 
@@ -237,5 +288,16 @@ describe('TransactionForm', () => {
             'Não foi possível registrar a transação. Verifique os dados e tente novamente.',
         );
         expect(component.submitting).toBe(false);
+    });
+
+    it('deve exibir erro inline do valor após o campo ser tocado', () => {
+        fixture.detectChanges();
+        const amount = component.form.controls.amount;
+
+        expect(component.showErrors(amount)).toBe(false);
+
+        amount.markAsTouched();
+
+        expect(component.showErrors(amount)).toBe(true);
     });
 });

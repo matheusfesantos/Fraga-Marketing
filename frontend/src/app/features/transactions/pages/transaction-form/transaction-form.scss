@@ -293,3 +293,19 @@
     }
   }
 }
+
+.form-field {
+  select.invalid,
+  .amount-input.invalid {
+    border-color: #e05252;
+  }
+
+  > small.field-error {
+    color: #b42318;
+  }
+}
+
+.amount-input.invalid:focus-within {
+  border-color: #e05252;
+  box-shadow: 0 0 0 3px rgb(224 82 82 / 12%);
+}
