@@ -75,7 +75,8 @@ builder.Services.AddCors(options =>
 
 builder.Services
     .AddHealthChecks()
-    .AddDbContextCheck<AppDbContext>("postgres");
+    .AddDbContextCheck<AppDbContext>("postgres")
+    .AddCheck<RedisHealthCheck>("redis");
 
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
