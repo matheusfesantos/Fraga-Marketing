@@ -35,6 +35,7 @@ services:
       retries: 10
 
   api:
+    image: ${DOCKER_USERNAME:-local}/fraga-marketing-api:${IMAGE_TAG:-latest}
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -56,6 +57,7 @@ services:
       - "8080:8080"
 
   frontend:
+    image: ${DOCKER_USERNAME:-local}/fraga-marketing-frontend:${IMAGE_TAG:-latest}
     build:
       context: ./frontend
       dockerfile: Dockerfile
