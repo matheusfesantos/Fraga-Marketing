@@ -19,11 +19,13 @@ Solução full-stack para gerenciar contas bancárias e processar eventos financ
 
 ### Com Docker Compose (recomendado)
 
-Pré-requisito: Docker com suporte a Compose. Na raiz do repositório:
+Pré-requisito: Docker com suporte a Compose. Na raiz do repositório, inicie os serviços:
 
 ```bash
 docker compose up --build
 ```
+
+Para este teste técnico, as credenciais do PostgreSQL estão fixas na configuração: usuário `postgres`, senha `postgres` e banco `fraga_db`. Não use essas credenciais em produção.
 
 | Serviço | URL |
 |---|---|
@@ -167,7 +169,9 @@ Documentação interativa: `http://localhost:8080/swagger`. Valores de `type`: `
 | `GET` | `/api/accounts/{accountId}` | Consulta uma conta |
 | `GET` | `/api/accounts/{accountId}/transactions?page=1&pageSize=10` | Extrato paginado (mais recente primeiro; `pageSize` entre 1 e 100) |
 | `POST` | `/api/transactions` | Processa um evento financeiro |
-| `GET` | `/health` | Health check (inclui o PostgreSQL) |
+| `GET` | `/health` | Health check (PostgreSQL e Redis) |
+
+O endpoint retorna `200` (`Healthy`) quando PostgreSQL e Redis estão acessíveis; se uma das dependências falhar, retorna `503` (`Unhealthy`). O Redis é verificado com um `PING`, pois também é usado pelo rate limiting.
 
 ### Limite de requisições
 
