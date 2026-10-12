@@ -13,7 +13,6 @@ Solução full-stack para gerenciar contas bancárias e processar eventos financ
 7. [Frontend](#frontend)
 8. [Testes](#testes)
 9. [Decisões e trade-offs](#decisões-e-trade-offs)
-10. [O que não foi feito](#o-que-não-foi-feito)
 
 ## Como executar
 
